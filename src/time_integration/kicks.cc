@@ -30,6 +30,7 @@
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
 #include "../time_integration/timestep.h"
+#include "../sph/sph.h"
 
 /*! \brief performs the first half step kick operator for the gravity
  *
@@ -493,8 +494,11 @@ void sim::hydro_force(int step_indicator)
 
   if(step_indicator == SECOND_HALF_STEP)
     Old = (old_hydro_accel *)Mem.mymalloc("Old", Sp.TimeBinsHydro.NActiveParticles * sizeof(old_hydro_accel));
-
+  
   int Nhydroforces = 0;
+#ifdef PBH_EFD  
+//  double mean_distance = cbrt(pow(All.BoxSize, 3) / Sp.TimeBinsHydro.NActiveParticles);
+#endif  
 
   for(int i = 0; i < Sp.TimeBinsHydro.NActiveParticles; i++)
     {
@@ -511,6 +515,33 @@ void sim::hydro_force(int step_indicator)
         }
 
       targetlist[Nhydroforces++] = target;
+#ifdef PBH_EFD      
+      int aux_timebin = Sp.P[target].getTimeBinHydro();
+
+      integertime aux_tstart, aux_tend, aux_ti_step = aux_timebin ? (((integertime)1) << aux_timebin) : 0;
+
+      if(step_indicator == SECOND_HALF_STEP)
+        {
+          aux_tend   = All.Ti_Current;
+          aux_tstart = aux_tend - aux_ti_step / 2; /* midpoint of step */
+        }
+      else
+        {
+          aux_tstart = All.Ti_Current;
+          aux_tend   = aux_tstart + aux_ti_step / 2; /* midpoint of step */
+        }
+
+      double aux_dt_drift;
+
+      if(All.ComovingIntegrationOn)
+        aux_dt_drift = Driftfac.get_drift_factor(aux_tstart, aux_tend);
+      else
+        aux_dt_drift = (aux_tend - aux_tstart) * All.Timebase_interval;
+ 
+//      printf("mean_distance = %f  aux_dt_drift = %f  tstart = %d  tend = %d  Timebase_interval = %f\n", mean_distance, aux_dt_drift, aux_tstart, aux_tend, All.Timebase_interval);
+//      Sp.SphP[target].dist_over_time = mean_distance / aux_dt_drift; 
+      Sp.SphP[target].dist_over_time = 1 / aux_dt_drift; 
+#endif       
     }
 
 #ifdef REUSE_HYDRO_ACCELERATIONS_FROM_PREVIOUS_STEP
@@ -520,6 +551,8 @@ void sim::hydro_force(int step_indicator)
     {
       NgbTree.hydro_forces_determine(Nhydroforces, targetlist);
     }
+
+  double mean_vel_update = 0;
 
   /* let's now do the hydrodynamical kicks */
   for(int i = 0; i < Nhydroforces; i++)
@@ -549,25 +582,55 @@ void sim::hydro_force(int step_indicator)
         dt_hydrokick = dt_entr;
 
       Sp.SphP[target].Entropy += Sp.SphP[target].DtEntropy * dt_entr;
+#ifdef PBH_EFD
+      if(Sp.SphP[target].scatter_occurrence == 1)
+        {
+          Sp.SphP[target].HydroAccel[0] /= dt_hydrokick;
+          Sp.SphP[target].HydroAccel[1] /= dt_hydrokick;
+          Sp.SphP[target].HydroAccel[2] /= dt_hydrokick;
+        }
+#endif
 
+/*#ifdef PBH_EFD
+      Sp.P[target].Vel[0] += Sp.SphP[target].HydroAccel[0] / 2;
+      Sp.P[target].Vel[1] += Sp.SphP[target].HydroAccel[1] / 2;
+      Sp.P[target].Vel[2] += Sp.SphP[target].HydroAccel[2] / 2; 
+
+#else */
       Sp.P[target].Vel[0] += Sp.SphP[target].HydroAccel[0] * dt_hydrokick;
       Sp.P[target].Vel[1] += Sp.SphP[target].HydroAccel[1] * dt_hydrokick;
       Sp.P[target].Vel[2] += Sp.SphP[target].HydroAccel[2] * dt_hydrokick;
+      
+      double vel_update_check2 = Sp.SphP[target].HydroAccel[0] * Sp.SphP[target].HydroAccel[0] + Sp.SphP[target].HydroAccel[1] * Sp.SphP[target].HydroAccel[1] + Sp.SphP[target].HydroAccel[2] * Sp.SphP[target].HydroAccel[2];
+      double vel_update_check = sqrt(vel_update_check2) * dt_hydrokick;
+      if(vel_update_check)
+        mean_vel_update += vel_update_check;
+//#endif
 
       if(step_indicator == SECOND_HALF_STEP)
         {
           Sp.SphP[target].EntropyPred = Sp.SphP[target].Entropy;
           Sp.SphP[target].set_thermodynamic_variables();
-
+//#ifdef PBH_EFD
+//          Sp.SphP[target].VelPred[0] += Sp.SphP[target].HydroAccel[0] - Old[i].HydroAccel[0];
+//          Sp.SphP[target].VelPred[1] += Sp.SphP[target].HydroAccel[1] - Old[i].HydroAccel[1];        
+//          Sp.SphP[target].VelPred[2] += Sp.SphP[target].HydroAccel[2] - Old[i].HydroAccel[2];
+//         Sp.SphP[target].VelPred[0] += Sp.SphP[target].HydroAccel[0] * dt_hydrokick;
+//         Sp.SphP[target].VelPred[1] += Sp.SphP[target].HydroAccel[1] * dt_hydrokick;        
+//         Sp.SphP[target].VelPred[2] += Sp.SphP[target].HydroAccel[2] * dt_hydrokick;
+          
+//#else
           Sp.SphP[target].VelPred[0] += (Sp.SphP[target].HydroAccel[0] - Old[i].HydroAccel[0]) * dt_hydrokick;
           Sp.SphP[target].VelPred[1] += (Sp.SphP[target].HydroAccel[1] - Old[i].HydroAccel[1]) * dt_hydrokick;
           Sp.SphP[target].VelPred[2] += (Sp.SphP[target].HydroAccel[2] - Old[i].HydroAccel[2]) * dt_hydrokick;
-
+//#endif
           /* note: if there is no gravity, we should instead set VelPred = Vel (if this is not done anymore in the gravity
            * routine)
            */
         }
     }
+    
+  printf("Delta v = %f\n", mean_vel_update / Sp.TimeBinsHydro.NActiveParticles);
 
   if(step_indicator == SECOND_HALF_STEP)
     Mem.myfree(Old);

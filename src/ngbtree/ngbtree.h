@@ -106,6 +106,7 @@ struct foreign_sphpoint_data
 
   MyDouble Mass;
   MyIntPosType IntPos[3];
+  MyIDStorage ID;
 
   int Nextnode;
   unsigned char Nextnode_shmrank;

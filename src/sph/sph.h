@@ -94,9 +94,28 @@ class sph : public ngbtree
 
     MyDouble Mass;
     signed char TimeBinHydro;
+    unsigned int ID;
   };
 
   ngbdata_hydro *Ngbhydrodat;
+    
+  struct scatter_event
+  {
+    unsigned int scatter_partner_one;
+    unsigned int scatter_partner_two;
+    double scattering_probability;
+  };
+  scatter_event *scatter_list;
+  
+  int numberofparticles;
+  int numberoflocalparticles;
+  int numberofforeignparticles;
+  int pairsconsidered;
+  int nscatterevents;
+  int n0vrelbefore;
+  int n0vrelafter;
+  double ti_step_to_phys;
+  double scatter_prob_to_phys;
 
   inline foreign_sphpoint_data *get_foreignpointsp(int n, unsigned char shmrank)
   {
@@ -111,6 +130,13 @@ class sph : public ngbtree
   inline void clear_density_result(sph_particle_data *SphP);
 
   void hydro_evaluate_kernel(pinfo &pdat);
+  void scatter_evaluate_kernel(pinfo &pdat);
+  void scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents);
+  static bool by_scatter_prob(const scatter_event &s1, const scatter_event &s2)
+  {
+    return s1.scattering_probability > s2.scattering_probability;//should have descending order
+  }
+  inline int get_index_from_ID(MyIDType ID, int h);
   inline void sph_hydro_interact(pinfo &pdat, int no, char no_type, unsigned char shmrank, int mintopleafnode, int committed);
   inline void sph_hydro_open_node(pinfo &pdat, ngbnode *nop, int mintopleafnode, int committed);
   inline int sph_hydro_evaluate_particle_node_opening_criterion(pinfo &pdat, ngbnode *nop);

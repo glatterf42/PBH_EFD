@@ -381,6 +381,30 @@ unity and uses `Hubble` to directly set the Hubble constant. Both is
 possible, and intermediate forms in principle as well.
  
 -------
+
+**MeanPBHScatteringCrossSection** 1.73189e-13
+
+The average basis value for PBH gravitational scattering cross sections 
+in Gadget unit length squared. This doesn't feature in the relative 
+velocity yet which comes in as 1/vrel^4 [s^4/km^4]. The example value has been 
+computed from the extended PBH mass function of ... .
+
+-------
+
+**AveragePBHMass** 3.086978e-10
+
+The average PBH mass according to the mass function by ... in Gadget unit mass.
+This corresponds to 3.087 Msun.
+
+-------
+
+**SigmaOverM** 5.6103e-4
+
+The quotient of the mean PBH scattering cross section and the average
+PBH mass in Gadget units.
+
+-------
+
  
 System of units                                            {#units}
 ===============

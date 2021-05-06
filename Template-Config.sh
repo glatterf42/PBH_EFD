@@ -90,6 +90,7 @@ SELFGRAVITY                                   # switch to enable self-gravity of
 
 #COOLING                                      # Enables radiative atomic cooling by hydrogen and helium
 #STARFORMATION                                # Enables star formation with the Springel & Hernquist (2003) model
+#PBH_EFD									  # Enables gravitational scattering interactions between dark matter particles
 
 
 #---------------------------------------- Single/double precision and data types

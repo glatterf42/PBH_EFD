@@ -372,7 +372,11 @@ int simparticles::drift_particle(particle_data *P, sph_particle_data *SphP, inte
 
       for(int j = 0; j < 3; j++)
         {
+//#ifdef PBH_EFD
+//          SphP->VelPred[j] += SphP->HydroAccel[j];
+//#else
           SphP->VelPred[j] += SphP->HydroAccel[j] * dt_hydrokick;
+//#endif
 #ifdef HIERARCHICAL_GRAVITY
           SphP->VelPred[j] += SphP->FullGravAccel[j] * dt_gravkick;
 #else

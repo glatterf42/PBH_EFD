@@ -427,7 +427,7 @@ VTUNE_LIBS =
 endif
 
 GSL_LIBS   += -lgsl -lgslcblas
-HDF5_LIBS  += -lhdf5 -lz
+HDF5_LIBS  += -lhdf5 -lz -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/
 MATH_LIBS  = -lm
 
 MAKEFILES = $(MAKEFILE_LIST) buildsystem/Makefile.config
@@ -436,7 +436,7 @@ MAKEFILES = $(MAKEFILE_LIST) buildsystem/Makefile.config
 #combine compiler options#
 ##########################
 
-CFLAGS = $(OPTIMIZE) $(OPT) $(HDF5_INCL) $(GSL_INCL) $(FFTW_INCL) $(HWLOC_INCL) $(VTUNE_INCL) $(MAPS_INCL) -I$(BUILD_DIR) -I$(SRC_DIR)
+CFLAGS = $(OPTIMIZE) $(OPT) $(HDF5_INCL) $(GSL_INCL) $(FFTW_INCL) $(HWLOC_INCL) $(VTUNE_INCL) $(MAPS_INCL) -I$(BUILD_DIR) -I$(SRC_DIR) -I /usr/include/hdf5/openmpi
 
 LIBS = $(MATH_LIBS) $(HDF5_LIBS) $(GSL_LIBS) $(FFTW_LIBS) $(HWLOC_LIBS) $(VTUNE_LIBS) $(TEST_LIBS) $(MAPS_LIBS)
 

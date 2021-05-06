@@ -68,6 +68,12 @@ void global_data_all_processes::register_parameters(void)
   add_param("HubbleParam", &HubbleParam, PARAM_DOUBLE, PARAM_FIXED);
   add_param("BoxSize", &BoxSize, PARAM_DOUBLE, PARAM_FIXED);
 
+#ifdef PBH_EFD
+  add_param("MeanPBHScatteringCrossSection", &MeanPBHScatteringCrossSection, PARAM_DOUBLE, PARAM_FIXED);
+  add_param("AveragePBHMass", &AveragePBHMass, PARAM_DOUBLE, PARAM_FIXED);
+  add_param("SigmaOverM", &SigmaOverM, PARAM_DOUBLE, PARAM_FIXED);
+#endif
+
   add_param("MaxMemSize", &MaxMemSize, PARAM_INT, PARAM_CHANGEABLE);
   add_param("TimeOfFirstSnapshot", &TimeOfFirstSnapshot, PARAM_DOUBLE, PARAM_CHANGEABLE);
   add_param("CpuTimeBetRestartFile", &CpuTimeBetRestartFile, PARAM_DOUBLE, PARAM_CHANGEABLE);

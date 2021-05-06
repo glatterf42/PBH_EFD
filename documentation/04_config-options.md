@@ -738,6 +738,16 @@ softening length is defined for the chosen type.
 
 -------
 
+**PBH_EFD**
+
+This will be our algorithm that enables gravitational scattering between
+dark matter particles such that we can effectively model SIDM. This is 
+going to replace the hydrodynamic force calculation, which will therefore
+be switched off when this option is active.
+
+-------
+
+
 Time integration options                                    {#time}
 ========================
 

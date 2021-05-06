@@ -14,5 +14,5 @@ echo "Running on $SLURM_NPROCS processors."
 echo "Current working directory is `pwd`"
 echo
 
-mpiexec -np $SLURM_NPROCS  ./Gadget4 param.txt 
+mpiexec -np 2  ./Gadget4 working-param.txt 
 
