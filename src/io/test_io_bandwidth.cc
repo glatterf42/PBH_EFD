@@ -9,7 +9,7 @@
  * \brief test routines to identify optimum setting of MaxFilesWithConcurrentIO on given machine
  */
 
-#include "../io/test_io_bandwidth.h"
+#include "gadgetconfig.h"
 
 #include <math.h>
 #include <mpi.h>
@@ -24,6 +24,7 @@
 #include "../data/mymalloc.h"
 #include "../domain/domain.h"
 #include "../io/io.h"
+#include "../io/test_io_bandwidth.h"
 #include "../lightcone/lightcone.h"
 #include "../logs/timer.h"
 #include "../main/simulation.h"
@@ -31,7 +32,6 @@
 #include "../ngbtree/ngbtree.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
-#include "gadgetconfig.h"
 
 void test_io_bandwidth::measure_io_bandwidth(void)
 {

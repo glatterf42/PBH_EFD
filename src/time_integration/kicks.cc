@@ -9,6 +9,8 @@
  *  \brief drives gravitational and hydrodynamical force calculations and applies corresponding kicks to particles
  */
 
+#include "gadgetconfig.h"
+
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -29,7 +31,6 @@
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
 #include "../time_integration/timestep.h"
-#include "gadgetconfig.h"
 
 /*! \brief performs the first half step kick operator for the gravity
  *

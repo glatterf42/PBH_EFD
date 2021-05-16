@@ -9,8 +9,9 @@
  *  \brief code for initialization of a simulation from initial conditions
  */
 
-#include <mpi.h>
+#include "gadgetconfig.h"
 
+#include <mpi.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -37,7 +38,6 @@
 #include "../subfind/subfind_readid_io.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
-#include "gadgetconfig.h"
 
 using namespace std;
 
@@ -128,6 +128,7 @@ void sim::init(int RestartSnapNum)
           maxid = tmp[i];
 
       Mem.myfree(tmp);
+
 
       int count = 0;
       for(int i = 0; i < Sp.NumPart; i++)
@@ -476,7 +477,7 @@ void sim::init(int RestartSnapNum)
    */
 #ifdef PRESSURE_ENTROPY_SPH
 #ifndef INITIAL_CONDITIONS_CONTAIN_ENTROPY
-  NgbTree.setup_entropy_to_invgamma();
+    NgbTree.setup_entropy_to_invgamma();
 #endif
 #endif
 
@@ -484,15 +485,15 @@ void sim::init(int RestartSnapNum)
   for(int i = 0; i < Sp.NumGas; i++)
     {
 #ifndef INITIAL_CONDITIONS_CONTAIN_ENTROPY
-
-      if(ThisTask == 0 && i == 0)
-        printf("INIT: Converting u -> entropy\n");
+        
+          if(ThisTask == 0 && i == 0)
+            printf("INIT: Converting u -> entropy\n");
 
 #if !defined(PRESSURE_ENTROPY_SPH) && !defined(ISOTHERM_EQS)
-      Sp.SphP[i].Entropy = GAMMA_MINUS1 * Sp.SphP[i].Entropy / pow(Sp.SphP[i].Density * All.cf_a3inv, GAMMA_MINUS1);
+          Sp.SphP[i].Entropy = GAMMA_MINUS1 * Sp.SphP[i].Entropy / pow(Sp.SphP[i].Density * All.cf_a3inv, GAMMA_MINUS1);
 #endif
-      Sp.SphP[i].EntropyPred = Sp.SphP[i].Entropy;
-
+          Sp.SphP[i].EntropyPred = Sp.SphP[i].Entropy;
+        
 #endif
       /* The predicted entropy values have been already set for all SPH formulation */
       /* so it should be ok computing pressure and csound now */

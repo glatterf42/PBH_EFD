@@ -9,6 +9,8 @@
  *  \brief implements some user defined MPI types for collectives
  */
 
+#include "gadgetconfig.h"
+
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -18,7 +20,6 @@
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
 #include "../mpi_utils/mpi_utils.h"
-#include "gadgetconfig.h"
 
 static void min_MPI_MyIntPosType(void *in, void *inout, int *len, MPI_Datatype *type)
 {

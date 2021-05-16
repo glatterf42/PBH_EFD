@@ -12,6 +12,8 @@
 #ifndef EWALD_H
 #define EWALD_H
 
+#include "gadgetconfig.h"
+
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -26,7 +28,6 @@
 #include "../gravtree/gravtree.h"
 #include "../io/io.h"
 #include "../system/system.h"
-#include "gadgetconfig.h"
 
 /*!
  *

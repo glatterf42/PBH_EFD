@@ -9,7 +9,7 @@
  *  \brief routines for log-file handling
  */
 
-#include "../logs/logs.h"
+#include "gadgetconfig.h"
 
 #include <math.h>
 #include <mpi.h>
@@ -20,11 +20,11 @@
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
 #include "../data/mymalloc.h"
+#include "../logs/logs.h"
 #include "../main/simulation.h"
 #include "../mpi_utils/mpi_utils.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
-#include "gadgetconfig.h"
 
 /*! \brief Open files for logging.
  *

@@ -9,8 +9,9 @@
  *  \brief contains routines to improve the domain balance by combining several patches per MPI rank
  */
 
-#include <mpi.h>
+#include "gadgetconfig.h"
 
+#include <mpi.h>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -26,7 +27,6 @@
 #include "../sort/cxxsort.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
-#include "gadgetconfig.h"
 
 /** This function uses the cumulative cost function (which weights work-load and memory-load equally) to subdivide
  *  the list of top-level leaf nodes into pieces that are (approximately) equal in size.

@@ -9,6 +9,8 @@
  *  \brief contains the basic simulation loop that iterates over timesteps
  */
 
+#include "gadgetconfig.h"
+
 #include <ctype.h>
 #include <math.h>
 #include <mpi.h>
@@ -33,7 +35,6 @@
 #include "../ngbtree/ngbtree.h"
 #include "../sort/parallel_sort.h"
 #include "../system/system.h"
-#include "gadgetconfig.h"
 
 /*!
  * Main driver routine for advancing the simulation forward in time.

@@ -9,6 +9,9 @@
  *  \brief initial set-up of a simulation run
  */
 
+#include "compiler-command-line-args.h"
+#include "gadgetconfig.h"
+
 #include <hdf5.h>
 #include <math.h>
 #include <mpi.h>
@@ -45,8 +48,6 @@
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
 #include "../time_integration/timestep.h"
-#include "compiler-command-line-args.h"
-#include "gadgetconfig.h"
 
 /*!
  *  This file contains various functions to initialize a simulation run. In

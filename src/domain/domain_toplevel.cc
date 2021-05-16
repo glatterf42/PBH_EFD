@@ -9,8 +9,9 @@
  *  \brief construction of top-level for subdividing the volume into domains
  */
 
-#include <mpi.h>
+#include "gadgetconfig.h"
 
+#include <mpi.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -27,7 +28,6 @@
 #include "../sort/cxxsort.h"
 #include "../sort/peano.h"
 #include "../system/system.h"
-#include "gadgetconfig.h"
 
 template <typename partset>
 void domain<partset>::domain_do_local_refine(int n, int *list)

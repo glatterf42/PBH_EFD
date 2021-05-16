@@ -9,7 +9,7 @@
  *  \brief tabulates cosmological drift/kick factors for fast look-up
  */
 
-#include "../time_integration/driftfac.h"
+#include "gadgetconfig.h"
 
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_math.h>
@@ -21,7 +21,7 @@
 
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
-#include "gadgetconfig.h"
+#include "../time_integration/driftfac.h"
 
 void driftfac::init_drift_table(void)
 {

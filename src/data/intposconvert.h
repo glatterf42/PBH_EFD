@@ -12,10 +12,10 @@
 #ifndef CONVERT_H
 #define CONVERT_H
 
-#include <cmath>
-
 #include "allvars.h"
 #include "dtypes.h"
+
+#include <cmath>
 
 #define MSB ((MyIntPosType)(~((MyIntPosType)(~((MyIntPosType)0)) >> ((MyIntPosType)1))))
 

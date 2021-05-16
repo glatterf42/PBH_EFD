@@ -12,6 +12,8 @@
 #ifndef PM_NONPERIODIC_H
 #define PM_NONPERIODIC_H
 
+#include "gadgetconfig.h"
+
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
 #include "../data/intposconvert.h"
@@ -23,7 +25,6 @@
 #include "../pm/pm_mpi_fft.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
-#include "gadgetconfig.h"
 
 class pm_nonperiodic : public pm_mpi_fft
 {

@@ -9,7 +9,7 @@
  *  \brief routines for I/O of snapshot files
  */
 
-#include "../io/snap_io.h"
+#include "gadgetconfig.h"
 
 #include <errno.h>
 #include <hdf5.h>
@@ -30,6 +30,7 @@
 #include "../gravtree/gravtree.h"
 #include "../io/hdf5_util.h"
 #include "../io/io.h"
+#include "../io/snap_io.h"
 #include "../lightcone/lightcone.h"
 #include "../logs/logs.h"
 #include "../logs/timer.h"
@@ -39,7 +40,6 @@
 #include "../sort/peano.h"
 #include "../src/pm/pm.h"
 #include "../system/system.h"
-#include "gadgetconfig.h"
 
 /*!
  * \brief Function for field registering.
@@ -415,13 +415,13 @@ void snap_io::read_ic(const char *fname)
   Sp->NumPart += add_numpart;
 #endif
 
+
+
 #ifdef GADGET2_HEADER
 #ifndef INITIAL_CONDITIONS_CONTAIN_ENTROPY
-  if(header.flag_entropy_instead_u)
-    Terminate("Initial condition file contains entropy, but INITIAL_CONDITIONS_CONTAIN_ENTROPY is not set\n");
-#else
-  if(!header.flag_entropy_instead_u)
-    Terminate("Initial condition file contains uthermal, but INITIAL_CONDITIONS_CONTAIN_ENTROPY is set\n");
+  if(header.flag_entropy_instead_u) Terminate("Initial condition file contains entropy, but INITIAL_CONDITIONS_CONTAIN_ENTROPY is not set\n");
+#else    
+  if(! header.flag_entropy_instead_u)Terminate("Initial condition file contains uthermal, but INITIAL_CONDITIONS_CONTAIN_ENTROPY is set\n");
 #endif
 #endif
 
