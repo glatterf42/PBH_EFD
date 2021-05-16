@@ -13,7 +13,6 @@
 #define DTYPES_H
 
 #include <stdint.h>
-
 #include <cstddef>
 #ifdef EXPLICIT_VECTORIZATION
 #include "../vectorclass/vectorclass.h"

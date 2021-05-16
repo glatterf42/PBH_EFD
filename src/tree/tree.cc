@@ -9,7 +9,7 @@
  *  \brief basic routines for oct-tree building
  */
 
-#include "../tree/tree.h"
+#include "gadgetconfig.h"
 
 #include <math.h>
 #include <mpi.h>
@@ -30,7 +30,7 @@
 #include "../sort/peano.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
-#include "gadgetconfig.h"
+#include "../tree/tree.h"
 
 /*! This file contains the construction of the tree used for calculating the gravitational force
  *  and the neighbor tree for SPH.

@@ -14,13 +14,14 @@
 #ifndef ALLVARS_H
 #define ALLVARS_H
 
+#include "gadgetconfig.h"
+
 #include <math.h>
 
 #include "../data/constants.h"
 #include "../data/dtypes.h"
 #include "../data/macros.h"
 #include "../io/parameters.h"
-#include "gadgetconfig.h"
 
 /** Data which is the SAME for all tasks (mostly code parameters read
  * from the parameter file).  Holding this data in a structure is
@@ -95,6 +96,7 @@ struct global_data_all_processes : public parameters
   double InitGasTemp;      /**< may be used to set the temperature in the IC's */
   double InitGasU;         /**< the same, but converted to thermal energy per unit mass */
   double MinEgySpec;       /**< the minimum allowed temperature expressed as energy per unit mass */
+
 
   /* some force counters  */
 

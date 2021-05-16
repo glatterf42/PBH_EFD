@@ -12,6 +12,8 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
+#include "gadgetconfig.h"
+
 #include <mpi.h>
 
 #include "../cooling_sfr/cooling.h"
@@ -43,7 +45,6 @@
 #include "../pm/pm.h"
 #include "../sph/sph.h"
 #include "../system/pinning.h"
-#include "gadgetconfig.h"
 
 class sim : public pinning, public test_io_bandwidth
 {

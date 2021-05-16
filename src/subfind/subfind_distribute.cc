@@ -14,7 +14,6 @@
 #ifdef SUBFIND
 
 #include <mpi.h>
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>

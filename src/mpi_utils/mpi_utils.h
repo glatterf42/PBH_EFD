@@ -12,7 +12,6 @@
 #define MPI_UTILS_H
 
 #include <mpi.h>
-
 #include "../data/dtypes.h"
 #include "../data/mymalloc.h"
 

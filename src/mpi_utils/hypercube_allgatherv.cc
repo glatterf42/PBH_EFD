@@ -9,6 +9,8 @@
  *  \brief a simple version of an Allgatherv implemented with a hypercube communication model
  */
 
+#include "gadgetconfig.h"
+
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -17,7 +19,6 @@
 
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
-#include "gadgetconfig.h"
 
 #ifdef MPI_HYPERCUBE_ALLGATHERV
 

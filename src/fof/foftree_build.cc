@@ -9,13 +9,13 @@
  *  \brief routines needed for FOF neighbor tree construction
  */
 
+#include "gadgetconfig.h"
+
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "gadgetconfig.h"
 #
 #include "../data/allvars.h"
 #include "../data/dtypes.h"

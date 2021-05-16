@@ -16,7 +16,6 @@
 #include <hdf5.h>
 #include <mpi.h>
 #include <sys/stat.h>
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>

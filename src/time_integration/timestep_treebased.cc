@@ -9,6 +9,8 @@
  *  \brief routines to find the timestep by checking for the arrival of the first waves from anywhere
  */
 
+#include "gadgetconfig.h"
+
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -30,7 +32,6 @@
 #include "../sort/cxxsort.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
-#include "gadgetconfig.h"
 
 inline int sph::sph_treetimestep_evaluate_particle_node_opening_criterion(pinfo &pdat, ngbnode *nop)
 {

@@ -9,6 +9,8 @@
  *  \brief contains the global variables defined in the MPI helper functions
  */
 
+#include "gadgetconfig.h"
+
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -18,7 +20,6 @@
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
 #include "../mpi_utils/mpi_utils.h"
-#include "gadgetconfig.h"
 
 MPI_Datatype MPI_MyIntPosType;
 

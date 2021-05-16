@@ -9,7 +9,7 @@
  *  \brief various low level helper routines
  */
 
-#include "../system/system.h"
+#include "gadgetconfig.h"
 
 #include <gsl/gsl_rng.h>
 #include <math.h>
@@ -35,7 +35,7 @@
 #include "../main/main.h"
 #include "../main/simulation.h"
 #include "../mpi_utils/mpi_utils.h"
-#include "gadgetconfig.h"
+#include "../system/system.h"
 
 gsl_rng *random_generator; /*!< the random number generator used */
 

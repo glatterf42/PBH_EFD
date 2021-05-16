@@ -9,7 +9,7 @@
  *  \brief routines for determining the timesteps of particles
  */
 
-#include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 #include <math.h>
 #include <mpi.h>
@@ -28,7 +28,7 @@
 #include "../main/simulation.h"
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
-#include "gadgetconfig.h"
+#include "../time_integration/timestep.h"
 
 /*! This function advances the system in momentum space, i.e. it does apply the 'kick' operation after the
  *  forces have been computed. Additionally, it assigns new timesteps to particles. At start-up, a
