@@ -9,7 +9,7 @@
  *  \brief some helper functions for HDF5 I/O routines
  */
 
-#include "gadgetconfig.h"
+#include "../io/hdf5_util.h"
 
 #include <hdf5.h>
 #include <math.h>
@@ -20,7 +20,7 @@
 
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
-#include "../io/hdf5_util.h"
+#include "gadgetconfig.h"
 
 #define HALF_ROUND_STYLE 1
 #include "../half/half.hpp"

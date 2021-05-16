@@ -9,8 +9,6 @@
  *  \brief contains the code for the neighbor tree construction
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -31,6 +29,7 @@
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 void ngbtree::report_log_message(void)
 {

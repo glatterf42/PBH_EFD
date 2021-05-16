@@ -14,14 +14,13 @@
 #ifndef ALLVARS_H
 #define ALLVARS_H
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 
 #include "../data/constants.h"
 #include "../data/dtypes.h"
 #include "../data/macros.h"
 #include "../io/parameters.h"
+#include "gadgetconfig.h"
 
 /** Data which is the SAME for all tasks (mostly code parameters read
  * from the parameter file).  Holding this data in a structure is
@@ -97,7 +96,6 @@ struct global_data_all_processes : public parameters
   double InitGasU;         /**< the same, but converted to thermal energy per unit mass */
   double MinEgySpec;       /**< the minimum allowed temperature expressed as energy per unit mass */
 
-
   /* some force counters  */
 
   long long TotNumOfForces;     /**< counts total number of force computations  */
@@ -143,9 +141,9 @@ struct global_data_all_processes : public parameters
 
   double BoxSize; /**< Boxsize in case periodic boundary conditions are used */
 
-  double MeanPBHScatteringCrossSection;		/**< average cross section of PBHs for gravitational interactions */
-  double AveragePBHMass; 					/**< average PBH mass according to extended mass function */
-  double SigmaOverM; 						/**< average PBH scattering cross section divided by their average mass */
+  double MeanPBHScatteringCrossSection; /**< average cross section of PBHs for gravitational interactions */
+  double AveragePBHMass;                /**< average PBH mass according to extended mass function */
+  double SigmaOverM;                    /**< average PBH scattering cross section divided by their average mass */
 
   /* Code options */
 

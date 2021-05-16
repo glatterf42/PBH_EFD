@@ -22,9 +22,10 @@
  *  communication.
  */
 
-#include "gadgetconfig.h"
+#include "../domain/domain.h"
 
 #include <mpi.h>
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -33,13 +34,13 @@
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
 #include "../data/mymalloc.h"
-#include "../domain/domain.h"
 #include "../logs/logs.h"
 #include "../logs/timer.h"
 #include "../main/simulation.h"
 #include "../sort/peano.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 /*! This is the main routine for the domain decomposition.  It acts as a
  *  driver routine that allocates various temporary buffers, maps the
@@ -237,8 +238,8 @@ void domain<simparticles>::domain_find_total_cost(void)
 
           if(Tp->P[i].getType() == 0)
             {
-	      if(bin >= Tp->P[i].getTimeBinHydro())
-		HydroCostPerListedTimeBin[n] += 1.0;
+              if(bin >= Tp->P[i].getTimeBinHydro())
+                HydroCostPerListedTimeBin[n] += 1.0;
             }
         }
     }

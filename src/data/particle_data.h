@@ -12,8 +12,6 @@
 #ifndef PARTDATA_H
 #define PARTDATA_H
 
-#include "gadgetconfig.h"
-
 #include <atomic>
 #include <climits>
 
@@ -27,6 +25,7 @@
 #include "../mpi_utils/setcomm.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 /** This structure holds all the information that is
  * stored for each particle of the simulation.

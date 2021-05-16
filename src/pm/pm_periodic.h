@@ -12,9 +12,9 @@
 #ifndef PM_PERIODIC_H
 #define PM_PERIODIC_H
 
-#include "gadgetconfig.h"
-
 #include <gsl/gsl_integration.h>
+
+#include "gadgetconfig.h"
 
 #if defined(PMGRID) || defined(NGENIC)
 

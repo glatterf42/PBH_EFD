@@ -9,7 +9,7 @@
  * \brief handles the reading/writing of restart files
  */
 
-#include "gadgetconfig.h"
+#include "../io/restart.h"
 
 #include <gsl/gsl_rng.h>
 #include <math.h>
@@ -24,7 +24,6 @@
 #include "../data/mymalloc.h"
 #include "../domain/domain.h"
 #include "../io/io.h"
-#include "../io/restart.h"
 #include "../lightcone/lightcone.h"
 #include "../logs/logs.h"
 #include "../logs/timer.h"
@@ -33,6 +32,7 @@
 #include "../ngbtree/ngbtree.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 void restart::write(sim *Sim_ptr)
 {

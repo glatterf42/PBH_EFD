@@ -9,8 +9,6 @@
  *  \brief SPH density computation and smoothing length determination
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -30,6 +28,7 @@
 #include "../sph/kernel.h"
 #include "../sph/sph.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 /*! This file contains the function for the "first SPH loop", where the SPH densities and some
  *  auxiliary quantities are computed.  There is also functionality that
@@ -890,9 +889,9 @@ void sph::density_evaluate_kernel(pinfo &pdat)
         }
 
       if(All.ComovingIntegrationOn)
-    	  vdotr2 += All.cf_atime2_hubble_a * r2;
+        vdotr2 += All.cf_atime2_hubble_a * r2;
 
-      Vec4d mu_ij = vdotr2  /(All.cf_afac3 * All.Time * r);
+      Vec4d mu_ij = vdotr2 / (All.cf_afac3 * All.Time * r);
 
       Vec4d cs_j(ngb0->Csnd, ngb1->Csnd, ngb2->Csnd, ngb3->Csnd);
       Vec4d cs_sum = cs_i + cs_j;
@@ -903,10 +902,9 @@ void sph::density_evaluate_kernel(pinfo &pdat)
 
       Vec4d decay_vel = select(decision, cs_sum, decay_vel_2);
 
+      Vec4d fac_decay_vel = select(decision_r_gt_0, 1, 0);
 
-	  Vec4d fac_decay_vel = select(decision_r_gt_0, 1, 0);
-
-	  decay_vel = decay_vel * fac_decay_vel;
+      decay_vel = decay_vel * fac_decay_vel;
 
       decayVel_loc = max(decayVel_loc, decay_vel);
 
@@ -914,10 +912,11 @@ void sph::density_evaluate_kernel(pinfo &pdat)
     }
 
 #ifdef TIMEDEP_ART_VISC
-  for(int i = 0; i < vector_length; i++) {
-	  if(decayVel_loc[i] > targetSphP->decayVel)
-		  targetSphP->decayVel = decayVel_loc[i];
-  }
+  for(int i = 0; i < vector_length; i++)
+    {
+      if(decayVel_loc[i] > targetSphP->decayVel)
+        targetSphP->decayVel = decayVel_loc[i];
+    }
 #endif
 }
 
@@ -1025,7 +1024,7 @@ void sph::density_evaluate_kernel(pinfo &pdat)
             }
 
           if(All.ComovingIntegrationOn)
-        	  vdotr2 += All.cf_atime2_hubble_a * r2;
+            vdotr2 += All.cf_atime2_hubble_a * r2;
 
           double mu_ij = vdotr2 / (All.cf_afac3 * All.Time * kernel.r);
           double decay_vel;

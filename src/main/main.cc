@@ -9,7 +9,7 @@
  *  \brief start of the program
  */
 
-#include "gadgetconfig.h"
+#include "../main/main.h"
 
 #include <gsl/gsl_math.h>
 #include <math.h>
@@ -27,13 +27,13 @@
 #include "../io/restart.h"
 #include "../io/snap_io.h"
 #include "../logs/logs.h"
-#include "../main/main.h"
 #include "../main/simulation.h"
 #include "../mergertree/mergertree.h"
 #include "../mpi_utils/shared_mem_handler.h"
 #include "../ngenic/ngenic.h"
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
+#include "gadgetconfig.h"
 
 /* create instances of global objects */
 

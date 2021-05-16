@@ -9,8 +9,6 @@
  *  \brief some simple extensions of MPI-collectives
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -21,6 +19,7 @@
 #include "../data/dtypes.h"
 #include "../data/mymalloc.h"
 #include "../mpi_utils/mpi_utils.h"
+#include "gadgetconfig.h"
 
 void minimum_large_ints(int n, long long *src, long long *res, MPI_Comm comm)
 {

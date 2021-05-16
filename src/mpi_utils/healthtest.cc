@@ -9,8 +9,6 @@
  *  \brief routines for testing whether all compute nodes yield the full CPU and communication performance
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -24,6 +22,7 @@
 #include "../main/simulation.h"
 #include "../mpi_utils/mpi_utils.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 #define TEST_PACKET_SIZE_IN_MB 5
 #define WORK_LOOP_COUNTER 50000000

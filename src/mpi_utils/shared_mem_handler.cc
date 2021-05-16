@@ -9,18 +9,19 @@
  *  \brief implements code for the shared-memory fetching of remote date through  designated MPI handler ranks
  */
 
+#include "../mpi_utils/shared_mem_handler.h"
+
 #include <hdf5.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <algorithm>
 #include <cstring>
 
 #include "../gravtree/gravtree.h"
 #include "../ngbtree/ngbtree.h"
 #include "../time_integration/driftfac.h"
-
-#include "../mpi_utils/shared_mem_handler.h"
 
 typedef gravtree<simparticles> gtree;
 typedef ngbtree ntree;

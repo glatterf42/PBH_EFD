@@ -9,7 +9,7 @@
  *  \brief some unit test routines for the table look-up in the ewald correction
  */
 
-#include "gadgetconfig.h"
+#include "../gravity/ewald.h"
 
 #include <math.h>
 #include <mpi.h>
@@ -20,13 +20,13 @@
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
 #include "../data/mymalloc.h"
-#include "../gravity/ewald.h"
 #include "../gravity/ewaldtensors.h"
 #include "../gravtree/gravtree.h"
 #include "../io/io.h"
 #include "../main/simulation.h"
 #include "../sort/cxxsort.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 #ifdef EWALD_TEST
 

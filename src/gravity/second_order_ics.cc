@@ -9,8 +9,6 @@
  *  \brief produce actual ICs from special 2nd order LPT ICs created by Adrian Jenkin's code
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdlib.h>
@@ -25,6 +23,7 @@
 #include "../main/simulation.h"
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
+#include "gadgetconfig.h"
 
 #ifdef SECOND_ORDER_LPT_ICS
 

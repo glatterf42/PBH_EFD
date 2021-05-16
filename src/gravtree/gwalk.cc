@@ -9,7 +9,7 @@
  *  \brief implements the routines for walking the gravity tree and accumulating forces
  */
 
-#include "gadgetconfig.h"
+#include "../gravtree/gwalk.h"
 
 #include <math.h>
 #include <mpi.h>
@@ -23,7 +23,6 @@
 #include "../domain/domain.h"
 #include "../gravity/ewald.h"
 #include "../gravtree/gravtree.h"
-#include "../gravtree/gwalk.h"
 #include "../logs/logs.h"
 #include "../logs/timer.h"
 #include "../main/simulation.h"
@@ -33,6 +32,7 @@
 #include "../sort/peano.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 /*! This file contains the code for the gravitational force computation by
  *  means of the tree algorithm. To this end, a tree force is computed for all

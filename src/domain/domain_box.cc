@@ -9,9 +9,8 @@
  *  \brief routines for finding domain extension, random shifting, and periodic wrapping if needed
  */
 
-#include "gadgetconfig.h"
-
 #include <mpi.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -27,6 +26,7 @@
 #include "../main/simulation.h"
 #include "../pm/pm.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 using namespace std;
 

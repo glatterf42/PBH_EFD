@@ -9,8 +9,6 @@
  *  \brief some routines for cross-checking the use of collective MPI routines
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -20,6 +18,7 @@
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
 #include "../mpi_utils/mpi_utils.h"
+#include "gadgetconfig.h"
 
 int myMPI_Allreduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {

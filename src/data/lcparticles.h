@@ -16,8 +16,6 @@
 
 #include <math.h>
 
-#include "gadgetconfig.h"
-
 #include "../data/constants.h"
 #include "../data/dtypes.h"
 #include "../data/intposconvert.h"
@@ -30,6 +28,7 @@
 #include "../mpi_utils/setcomm.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 class lcparticles : public intposconvert, public setcomm
 {

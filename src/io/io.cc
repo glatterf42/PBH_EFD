@@ -9,7 +9,7 @@
  * \brief main routines for driving I/O in Gadget's three file formats for snapshots, group catalogues etc.
  */
 
-#include "gadgetconfig.h"
+#include "../io/io.h"
 
 #include <errno.h>
 #include <hdf5.h>
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
 #include <algorithm>
 
 #include "../cooling_sfr/cooling.h"
@@ -27,7 +28,6 @@
 #include "../data/mymalloc.h"
 #include "../fof/fof.h"
 #include "../io/hdf5_util.h"
-#include "../io/io.h"
 #include "../io/parameters.h"
 #include "../lightcone/lightcone.h"
 #include "../logs/timer.h"
@@ -37,6 +37,7 @@
 #include "../mpi_utils/mpi_utils.h"
 #include "../subfind/subfind.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 #define HALF_ROUND_STYLE 1
 #include "../half/half.hpp"

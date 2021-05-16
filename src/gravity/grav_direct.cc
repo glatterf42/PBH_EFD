@@ -9,12 +9,11 @@
  *  \brief calculates forces through direct summation
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <algorithm>
 
 #include "../data/allvars.h"
@@ -30,6 +29,7 @@
 #include "../pm/pm.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 #ifdef ALLOW_DIRECT_SUMMATION
 

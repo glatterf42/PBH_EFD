@@ -14,6 +14,7 @@
 #ifdef FOF
 
 #include <mpi.h>
+
 #include <algorithm>
 #include <climits>
 #include <cmath>

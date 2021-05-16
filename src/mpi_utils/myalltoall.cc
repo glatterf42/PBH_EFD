@@ -9,8 +9,6 @@
  *  \brief a simple wrapper around MPI_Alltoallv that can deal with data in individual sends that are very big
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -21,6 +19,7 @@
 #include "../data/dtypes.h"
 #include "../data/mymalloc.h"
 #include "../mpi_utils/mpi_utils.h"
+#include "gadgetconfig.h"
 
 #define PCHAR(a) ((char *)a)
 

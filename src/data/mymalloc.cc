@@ -3,7 +3,7 @@
  * \copyright   by Volker Springel. Copyright (C) 2014-2020 by Volker Springel
  * \copyright   (vspringel@mpa-garching.mpg.de) and all contributing authors.
  *******************************************************************************/
-#include "gadgetconfig.h"
+#include "../data/mymalloc.h"
 
 #include <math.h>
 #include <mpi.h>
@@ -14,12 +14,12 @@
 
 #include "../data/allvars.h"
 #include "../data/dtypes.h"
-#include "../data/mymalloc.h"
 #include "../logs/logs.h"
 #include "../main/simulation.h"
 #include "../mpi_utils/mpi_utils.h"
 #include "../mpi_utils/shared_mem_handler.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 /** \file mymalloc.cc
  *

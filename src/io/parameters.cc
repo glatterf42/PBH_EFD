@@ -9,7 +9,7 @@
  *  \brief parses the parameter file
  */
 
-#include "gadgetconfig.h"
+#include "../io/parameters.h"
 
 #include <math.h>
 #include <mpi.h>
@@ -22,10 +22,10 @@
 #include "../data/dtypes.h"
 #include "../data/mymalloc.h"
 #include "../io/io.h"
-#include "../io/parameters.h"
 #include "../main/main.h"
 #include "../mpi_utils/shared_mem_handler.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 void parameters::add_param(const char *name, void *buf, int type, int flag)
 {

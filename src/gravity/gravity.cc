@@ -9,8 +9,6 @@
  * \brief main driver routines for computing the gravitational accelerations for all active particles
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdlib.h>
@@ -30,6 +28,7 @@
 #include "../pm/pm.h"
 #include "../system/system.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 /*! \brief This routine computes the gravitational accelerations for all active particles.
  *

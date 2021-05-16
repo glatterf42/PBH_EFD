@@ -12,8 +12,6 @@
 #ifndef GRAV_FORCETEST_H
 #define GRAV_FORCETEST_H
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -25,6 +23,7 @@
 #include "../data/simparticles.h"
 #include "../domain/domain.h"
 #include "../gravtree/gravtree.h"
+#include "gadgetconfig.h"
 
 #define TESTGRID 384
 

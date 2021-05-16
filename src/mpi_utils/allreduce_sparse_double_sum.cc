@@ -9,8 +9,6 @@
  *  \brief implementation of a reduction operation for sparsely populated data
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -21,6 +19,7 @@
 #include "../data/dtypes.h"
 #include "../data/mymalloc.h"
 #include "../mpi_utils/mpi_utils.h"
+#include "gadgetconfig.h"
 
 void allreduce_sparse_double_sum(double *loc, double *glob, int N, MPI_Comm Communicator)
 {

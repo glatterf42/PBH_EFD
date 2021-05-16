@@ -9,13 +9,14 @@
  *  \brief routines for computing Peano-Hilbert keys and for bringing particles into this order
  */
 
-#include "gadgetconfig.h"
+#include "../sort/peano.h"
 
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <algorithm>
 
 #include "../data/allvars.h"
@@ -24,8 +25,8 @@
 #include "../logs/timer.h"
 #include "../main/simulation.h"
 #include "../sort/cxxsort.h"
-#include "../sort/peano.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 namespace
 {

@@ -9,8 +9,6 @@
  *  \brief find the next sync point, drift particles forward in time, and (re)build the timebin lists
  */
 
-#include "gadgetconfig.h"
-
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -30,6 +28,7 @@
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
 #include "../time_integration/timestep.h"
+#include "gadgetconfig.h"
 
 /*
  * It counts the number of particles in each timebin and updates the
@@ -372,9 +371,9 @@ int simparticles::drift_particle(particle_data *P, sph_particle_data *SphP, inte
 
       for(int j = 0; j < 3; j++)
         {
-//#ifdef PBH_EFD
-//          SphP->VelPred[j] += SphP->HydroAccel[j];
-//#else
+          //#ifdef PBH_EFD
+          //          SphP->VelPred[j] += SphP->HydroAccel[j];
+          //#else
           SphP->VelPred[j] += SphP->HydroAccel[j] * dt_hydrokick;
 //#endif
 #ifdef HIERARCHICAL_GRAVITY

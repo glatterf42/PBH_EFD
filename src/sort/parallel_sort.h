@@ -12,9 +12,8 @@
 #ifndef PARALLEL_SORT_H
 #define PARALLEL_SORT_H
 
-#include "cxxsort.h"
-
 #include "../data/mymalloc.h"
+#include "cxxsort.h"
 
 //#define CHECK_LOCAL_RANK
 

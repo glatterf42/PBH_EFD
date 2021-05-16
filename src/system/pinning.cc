@@ -9,7 +9,7 @@
  *  \brief routines to report and modify the pinning of processes/threads to CPU cores
  */
 
-#include "gadgetconfig.h"
+#include "../system/pinning.h"
 
 #include <gsl/gsl_rng.h>
 #include <math.h>
@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../system/pinning.h"
+#include "gadgetconfig.h"
 
 #define MAX_CORES 4096
 

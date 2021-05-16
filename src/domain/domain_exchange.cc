@@ -9,9 +9,8 @@
  *  \brief routines for moving particle data between MPI ranks
  */
 
-#include "gadgetconfig.h"
-
 #include <mpi.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -29,6 +28,7 @@
 #include "../ngbtree/ngbtree.h"
 #include "../sort/cxxsort.h"
 #include "../system/system.h"
+#include "gadgetconfig.h"
 
 /*! \file domain_exchange.c
  *  \brief exchanges particle data according to the new domain decomposition
