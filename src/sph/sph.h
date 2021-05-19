@@ -99,13 +99,40 @@ class sph : public ngbtree
 
   ngbdata_hydro *Ngbhydrodat;
 
+  struct scatter_partner
+  {
+    unsigned int ID;
+    MyFloat VelPred[3];
+    MyDouble Mass;
+    int prob_list_index; /*!< indicates existence of a scatter_event */
+    MyFloat scatter_delta_vel[3]; /*!< particle velocity after scattering */
+    double dt; /*!<Not physical; physical only needed for scatter_prob computation. */
+    double sum_prob;
+    int accel_update_list_index;
+    //MyFloat sum_scatter_delta_vel;
+  };
+
   struct scatter_event
   {
-    unsigned int scatter_partner_one;
-    unsigned int scatter_partner_two;
+    scatter_partner partner_one;
+    scatter_partner partner_two;
     double scattering_probability;
   };
   scatter_event *scatter_list;
+
+  struct sum_prob_part
+  {
+    unsigned int id;
+    double prob_sum;
+  };
+  sum_prob_part *sum_prob_list;
+
+  struct scatter_accel_update
+  {
+    unsigned int ID;
+    MyFloat scatter_delta_a[3];
+  };
+  scatter_accel_update *scatter_accel_update_list;
 
   int numberofparticles;
   int numberoflocalparticles;
@@ -132,6 +159,7 @@ class sph : public ngbtree
   void hydro_evaluate_kernel(pinfo &pdat);
   void scatter_evaluate_kernel(pinfo &pdat);
   void scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents);
+  void scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_list, int nscatterevents); /*maybe better to have ndistinctparticles or so returned? */
   static bool by_scatter_prob(const scatter_event &s1, const scatter_event &s2)
   {
     return s1.scattering_probability > s2.scattering_probability;  // should have descending order
