@@ -584,12 +584,12 @@ void sim::hydro_force(int step_indicator)
 
       Sp.SphP[target].Entropy += Sp.SphP[target].DtEntropy * dt_entr;
 #ifdef PBH_EFD
-      /*if(Sp.SphP[target].scatter_occurrence == 1)
+      if(Sp.SphP[target].scatter_occurrence == 1)
         {
           Sp.SphP[target].HydroAccel[0] /= dt_hydrokick;
           Sp.SphP[target].HydroAccel[1] /= dt_hydrokick;
           Sp.SphP[target].HydroAccel[2] /= dt_hydrokick;
-        } */
+        } 
       
 #endif
 

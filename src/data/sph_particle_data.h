@@ -75,7 +75,7 @@ struct sph_particle_data : public sph_particle_data_hydrocore
   MyFloat CurrentMaxTiStep;
 
   //MyFloat scatter_delta_vel[3]; /*!< particle velocity update */
-  //bool scatter_occurrence;
+  bool scatter_occurrence;
 
 #ifdef PRESSURE_ENTROPY_SPH
   MyFloat

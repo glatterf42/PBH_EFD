@@ -104,11 +104,11 @@ class sph : public ngbtree
     unsigned int ID;
     MyFloat VelPred[3];
     MyDouble Mass;
-    int prob_list_index; /*!< indicates existence of a scatter_event */
+    //int prob_list_index; /*!< indicates existence of a scatter_event */
     MyFloat scatter_delta_vel[3]; /*!< particle velocity after scattering */
     double dt; /*!<Not physical; physical only needed for scatter_prob computation. */
-    double sum_prob;
-    int accel_update_list_index;
+    //double sum_prob;
+    //int accel_update_list_index;
     //MyFloat sum_scatter_delta_vel;
   };
 
@@ -120,12 +120,12 @@ class sph : public ngbtree
   };
   scatter_event *scatter_list;
 
-  struct sum_prob_part
+  /*struct sum_prob_part
   {
     unsigned int id;
     double prob_sum;
   };
-  sum_prob_part *sum_prob_list;
+  sum_prob_part *sum_prob_list; */
 
   struct scatter_accel_update
   {
