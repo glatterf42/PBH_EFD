@@ -32,3 +32,7 @@
 # Extra physics
 
     PBH_EFD
+
+# Time integration options
+
+	FORCE_EQUAL_TIMESTEPS

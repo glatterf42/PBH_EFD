@@ -1193,6 +1193,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                       if(P_i->getMass() == P_j->Mass && dt_i_phys == dt_j_phys && kernel.h_i == kernel.h_j)
                         {
                           scatter_prob = kernel.dvinv3 * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i * scatter_prob_to_phys;
+                          //scatter_prob = kernel.dv * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i * scatter_prob_to_phys; //for velocity-independent sigma/m
                           //                  scatter_prob =  kernel.dvinv3 * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i;
                         }
                       else
@@ -1201,7 +1202,8 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                           double scatter_prob_j_on_i = P_i->getMass() * kernel.wk_i * dt_i_phys;
                           scatter_prob =
                               (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 * All.SigmaOverM * scatter_prob_to_phys / 2;
-                          //                    scatter_prob = (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 *
+                          //scatter_prob =
+                          //    (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dv * All.SigmaOverM * scatter_prob_to_phys / 2; //for velocity-independent sigma/m                         //                    scatter_prob = (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 *
                           //                    All.SigmaOverM / 2;
                         }
                       //                D->mpi_printf("Scatter prob = %f  vrel = %f  r = %f  hi = %f  hj = %f  wki = %f  wkj = %f\n",
@@ -1392,8 +1394,10 @@ void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
   }
   Mem.myfree(sum_prob_list);*/
 
-  mycxxsort(scatter_list, scatter_list + nscatterevents, by_scatter_prob);
-  D->mpi_printf("max_scatter prob = %f\n", scatter_list[0].scattering_probability); 
+  //mycxxsort(scatter_list, scatter_list + nscatterevents, by_scatter_prob_descending);
+  //D->mpi_printf("max_scatter prob = %f\n", scatter_list[0].scattering_probability); 
+  mycxxsort(scatter_list, scatter_list + nscatterevents, by_scatter_prob_ascending);
+  D->mpi_printf("max_scatter prob = %f\n", scatter_list[nscatterevents - 1].scattering_probability); 
   //int nvelpredinits = 0;
   for(int l = 0; l < nscatterevents; l++)
     {

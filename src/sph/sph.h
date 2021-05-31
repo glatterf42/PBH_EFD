@@ -160,9 +160,13 @@ class sph : public ngbtree
   void scatter_evaluate_kernel(pinfo &pdat);
   void scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents);
   void scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_list, int nscatterevents); /*maybe better to have ndistinctparticles or so returned? */
-  static bool by_scatter_prob(const scatter_event &s1, const scatter_event &s2)
+  static bool by_scatter_prob_descending(const scatter_event &s1, const scatter_event &s2)
   {
     return s1.scattering_probability > s2.scattering_probability;  // should have descending order
+  }
+  static bool by_scatter_prob_ascending(const scatter_event &s1, const scatter_event &s2)
+  {
+    return s1.scattering_probability < s2.scattering_probability;  // should have ascending order
   }
   inline int get_index_from_ID(MyIDType ID, int h);
   inline void sph_hydro_interact(pinfo &pdat, int no, char no_type, unsigned char shmrank, int mintopleafnode, int committed);
