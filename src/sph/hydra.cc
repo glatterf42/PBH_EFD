@@ -1494,8 +1494,8 @@ void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
       /* Pick a random point on a sphere. */
       double rand_v     = get_random_number();
       double rand_w     = get_random_number();
-      double rand_theta = 2 * M_PI * rand_v;
-      double rand_phi   = acos(2 * rand_w - 1);
+      double rand_phi   = 2 * M_PI * rand_v;
+      double rand_theta = acos(2 * rand_w - 1);
       double rand_x     = cos(rand_phi) * sin(rand_theta);
       double rand_y     = sin(rand_phi) * sin(rand_theta);
       double rand_z     = cos(rand_theta);
