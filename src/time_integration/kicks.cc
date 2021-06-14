@@ -12,6 +12,7 @@
 #include "gadgetconfig.h"
 
 #include <math.h>
+#include <cmath> //for isnan()
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -607,6 +608,12 @@ void sim::hydro_force(int step_indicator)
                                  Sp.SphP[target].HydroAccel[1] * Sp.SphP[target].HydroAccel[1] +
                                  Sp.SphP[target].HydroAccel[2] * Sp.SphP[target].HydroAccel[2];
       double vel_update_check = sqrt(vel_update_check2) * dt_hydrokick;
+
+      if(isnan(vel_update_check))
+        {
+          Terminate("HydroAccel = %f  dt = %f  target = %d  index = %d\n", vel_update_check, dt_hydrokick, target, i);
+        }
+
       if(vel_update_check)
         mean_vel_update += vel_update_check;
       //#endif

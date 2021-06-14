@@ -327,7 +327,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   Ngbhydrodat = (ngbdata_hydro *)Mem.mymalloc("Ngbhydrodat", MAX_NGBS * sizeof(ngbdata_hydro));
 
 #ifdef PBH_EFD /* Create list of scattering events. */
-  scatter_list = (scatter_event *)Mem.mymalloc("scatter_list", 10 * Tp->TimeBinsHydro.GlobalNActiveParticles * sizeof(scatter_event));
+  scatter_list = (scatter_event *)Mem.mymalloc("scatter_list", Tp->TimeBinsHydro.GlobalNActiveParticles * sizeof(scatter_event));
   nscatterevents           = 0;
   numberofparticles        = 0;
   numberoflocalparticles   = 0;
@@ -430,7 +430,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
 #ifdef PBH_EFD
                   scatter_evaluate_kernel(pdat);
 #else
-              hydro_evaluate_kernel(pdat);
+                  hydro_evaluate_kernel(pdat);
 #endif
                 }
               else
@@ -519,7 +519,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
 
   D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
                 numberoflocalparticles, numberofforeignparticles);
-  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d\n", nscatterevents, pairsconsidered);
+  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d\n", nscatterevents_total, pairsconsidered); //prints all events but only pairs for one task
   D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
 #endif
   Mem.myfree(StackToFetch);
@@ -1204,7 +1204,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                               (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 * All.SigmaOverM * scatter_prob_to_phys / 2;
                           //scatter_prob =
                           //    (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dv * All.SigmaOverM * scatter_prob_to_phys / 2; //for velocity-independent sigma/m                         //                    scatter_prob = (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 *
-                          //                    All.SigmaOverM / 2;
+                          ////                    All.SigmaOverM / 2; #from when we didn't adapt units
                         }
                       //                D->mpi_printf("Scatter prob = %f  vrel = %f  r = %f  hi = %f  hj = %f  wki = %f  wkj = %f\n",
                       //                scatter_prob, kernel.dv, kernel.r, kernel.h_i, kernel.h_j, kernel.wk_i, kernel.wk_j);
@@ -1348,6 +1348,8 @@ inline void sph::clear_hydro_result(sph_particle_data *SphP)
 
 void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
 {
+  if(nscatterevents == 0)
+    return;
   /*sum_prob_list = (sum_prob_part *)Mem.mymalloc("sum_prob_list", nscatterevents * sizeof(sum_prob_part));
   int n_distinct_particles = 0; */
   /*Loop over all scatter_events to sum up scatter_prob of each particle.
@@ -1656,6 +1658,9 @@ void sph::scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_
   for(int k = 0; k < nscattereventstotal; k++)
   {
     int target_index = get_index_from_ID(scatter_accel_update_list_global[k].ID, 0);
+    if(target_index < 0)
+      continue;
+
     for(int u = 0; u < 3; u++)
     {
       Tp->SphP[target_index].HydroAccel[u] += scatter_accel_update_list_global[k].scatter_delta_a[u];
