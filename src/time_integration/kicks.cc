@@ -555,6 +555,7 @@ void sim::hydro_force(int step_indicator)
     }
 
   double mean_vel_update = 0;
+  double n_updates = 0;
 
   /* let's now do the hydrodynamical kicks */
   for(int i = 0; i < Nhydroforces; i++)
@@ -615,7 +616,10 @@ void sim::hydro_force(int step_indicator)
         }
 
       if(vel_update_check)
-        mean_vel_update += vel_update_check;
+        {
+          mean_vel_update += vel_update_check;
+          n_updates++;
+        }
       //#endif
 
       if(step_indicator == SECOND_HALF_STEP)
@@ -641,7 +645,8 @@ void sim::hydro_force(int step_indicator)
         }
     }
 
-  printf("Delta v = %f\n", mean_vel_update / Sp.TimeBinsHydro.NActiveParticles);
+  if(n_updates)
+    printf("Delta v = %f\n", mean_vel_update / n_updates); //Possible division by 0; not every active particle scatters, so might be too small.
 
   if(step_indicator == SECOND_HALF_STEP)
     Mem.myfree(Old);
