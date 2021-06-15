@@ -1208,7 +1208,9 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                         }
                       //                D->mpi_printf("Scatter prob = %f  vrel = %f  r = %f  hi = %f  hj = %f  wki = %f  wkj = %f\n",
                       //                scatter_prob, kernel.dv, kernel.r, kernel.h_i, kernel.h_j, kernel.wk_i, kernel.wk_j);
-
+                      if(scatter_prob < 0)
+                        Terminate("Prob = %f  kernel_i = %f  kernel_j = %f  dt_i = %f  dt_j = %f  vinv3 = %f  scatter_prob_to_phys = %f\n", scatter_prob, kernel.wk_i, kernel.wk_j, dt_i_phys, dt_j_phys, kernel.dvinv3, scatter_prob_to_phys);
+ 
                       double rand_u = get_random_number();
                       if(rand_u <= scatter_prob)
                         {
@@ -1349,7 +1351,10 @@ inline void sph::clear_hydro_result(sph_particle_data *SphP)
 void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
 {
   if(nscatterevents == 0)
-    return;
+    {
+      printf("No scatter events, so no list evaluation!\n");
+      return;
+    }
   /*sum_prob_list = (sum_prob_part *)Mem.mymalloc("sum_prob_list", nscatterevents * sizeof(sum_prob_part));
   int n_distinct_particles = 0; */
   /*Loop over all scatter_events to sum up scatter_prob of each particle.
@@ -1655,6 +1660,11 @@ void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
 
 void sph::scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_list_global, int nscattereventstotal)
 {
+  if(nscattereventstotal == 0)  
+    {
+      printf("No scatter events, so no acceleration update!\n");
+      return;
+    }
   for(int k = 0; k < nscattereventstotal; k++)
   {
     int target_index = get_index_from_ID(scatter_accel_update_list_global[k].ID, 0);
