@@ -337,6 +337,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   n0vrelafter              = 0;
   ti_step_to_phys          = 1 / (All.HubbleParam * Driftfac.hubble_function(All.Time));
   scatter_prob_to_phys     = All.HubbleParam * All.HubbleParam / pow(All.Time, 0);
+  max_density              = 0;
 #endif
 
   NumOnWorkStack         = 0;
@@ -465,6 +466,8 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
     }
 #endif
 #ifdef PBH_EFD
+  printf("Maximum density = %f\n", max_density);
+
   scatter_accel_update_list = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list", nscatterevents * sizeof(scatter_accel_update));
   scatter_list_evaluate(scatter_list, nscatterevents);
 
@@ -1184,6 +1187,28 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                           kernel.wk_j = 0;
                         }
 
+                      double density_i = P_i->getMass() * kernel.wk_i;
+                      double density_j = P_j->Mass * kernel.wk_j;
+
+                      if(density_i > max_density)
+                        {
+                          max_density = density_i;
+                        }
+                      else if(density_j > max_density)
+                        {
+                          max_density = density_j;
+                        }
+                      /*
+                      if(density_i > max_density)
+                        {
+                          density_i = max_density;
+                        }
+                      else if(density_j > max_density)
+                        {
+                          density_j = max_density;
+                        }
+                      */
+
                       int timebin_j = P_j->TimeBinHydro;
                       double dt_j = (timebin_j ? (((integertime)1) << timebin_j) : 0) * All.Timebase_interval;
                       double dt_j_phys = dt_j / ti_step_to_phys;
@@ -1192,14 +1217,14 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
 
                       if(P_i->getMass() == P_j->Mass && dt_i_phys == dt_j_phys && kernel.h_i == kernel.h_j)
                         {
-                          scatter_prob = kernel.dvinv3 * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i * scatter_prob_to_phys;
+                          scatter_prob = kernel.dvinv3 * All.SigmaOverM * dt_i_phys * density_i * scatter_prob_to_phys;
                           //scatter_prob = kernel.dv * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i * scatter_prob_to_phys; //for velocity-independent sigma/m
                           //                  scatter_prob =  kernel.dvinv3 * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i;
                         }
                       else
                         {
-                          double scatter_prob_i_on_j = P_j->Mass * kernel.wk_j * dt_j_phys;
-                          double scatter_prob_j_on_i = P_i->getMass() * kernel.wk_i * dt_i_phys;
+                          double scatter_prob_i_on_j = density_j * dt_j_phys;
+                          double scatter_prob_j_on_i = density_i * dt_i_phys;
                           scatter_prob =
                               (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 * All.SigmaOverM * scatter_prob_to_phys / 2;
                           //scatter_prob =

@@ -143,6 +143,7 @@ class sph : public ngbtree
   int n0vrelafter;
   double ti_step_to_phys;
   double scatter_prob_to_phys;
+  double max_density;
 
   inline foreign_sphpoint_data *get_foreignpointsp(int n, unsigned char shmrank)
   {
