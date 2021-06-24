@@ -337,7 +337,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   n0vrelafter              = 0;
   ti_step_to_phys          = 1 / (All.HubbleParam * Driftfac.hubble_function(All.Time));
   scatter_prob_to_phys     = All.HubbleParam * All.HubbleParam / pow(All.Time, 0);
-  max_density              = 0;
+  max_density              = 8000.0; //if this ends up being a global parameter, it would be more efficient to set it as such
 #endif
 
   NumOnWorkStack         = 0;
@@ -1190,15 +1190,15 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                       double density_i = P_i->getMass() * kernel.wk_i;
                       double density_j = P_j->Mass * kernel.wk_j;
 
-                      if(density_i > max_density)
+                      /*if(density_i > max_density)
                         {
                           max_density = density_i;
                         }
                       else if(density_j > max_density)
                         {
                           max_density = density_j;
-                        }
-                      /*
+                        } */
+                      
                       if(density_i > max_density)
                         {
                           density_i = max_density;
@@ -1207,7 +1207,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                         {
                           density_j = max_density;
                         }
-                      */
+                      
 
                       int timebin_j = P_j->TimeBinHydro;
                       double dt_j = (timebin_j ? (((integertime)1) << timebin_j) : 0) * All.Timebase_interval;
