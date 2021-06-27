@@ -338,6 +338,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   ti_step_to_phys          = 1 / (All.HubbleParam * Driftfac.hubble_function(All.Time));
   scatter_prob_to_phys     = All.HubbleParam * All.HubbleParam / pow(All.Time, 0);
   max_density              = 8000.0; //if this ends up being a global parameter, it would be more efficient to set it as such
+  nsimilarpairs            = 0;
 #endif
 
   NumOnWorkStack         = 0;
@@ -466,7 +467,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
     }
 #endif
 #ifdef PBH_EFD
-  printf("Maximum density = %f\n", max_density);
+  //printf("Maximum density = %f\n", max_density); //This printf is useless for a global parameter, only good for estimation of it.
 
   scatter_accel_update_list = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list", nscatterevents * sizeof(scatter_accel_update));
   scatter_list_evaluate(scatter_list, nscatterevents);
@@ -479,9 +480,11 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
     }
   }*/
   
-  // compute the global number of all scatter events
+  // compute the global number of all scatter events and similar pairs
   int nscatterevents_total = 0;
   myMPI_Allreduce( &nscatterevents, &nscatterevents_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); 
+  int nsimilarpairs_total = 0;
+  myMPI_Allreduce( &nsimilarpairs, &nsimilarpairs_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); 
 
   int NTask_here = Shmem.Sim_NTask;
   int *nscatterevents_per_task = new int[NTask_here];
@@ -522,7 +525,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
 
   D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
                 numberoflocalparticles, numberofforeignparticles);
-  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d\n", nscatterevents_total, pairsconsidered); //prints all events but only pairs for one task
+  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d  Similar pairs = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total); //prints all events but only pairs for one task
   D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
 #endif
   Mem.myfree(StackToFetch);
@@ -1220,6 +1223,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                           scatter_prob = kernel.dvinv3 * All.SigmaOverM * dt_i_phys * density_i * scatter_prob_to_phys;
                           //scatter_prob = kernel.dv * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i * scatter_prob_to_phys; //for velocity-independent sigma/m
                           //                  scatter_prob =  kernel.dvinv3 * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i;
+                          nsimilarpairs++;
                         }
                       else
                         {
