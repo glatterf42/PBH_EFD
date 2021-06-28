@@ -145,6 +145,7 @@ class sph : public ngbtree
   double scatter_prob_to_phys;
   double max_density;
   int nsimilarpairs;
+  int ndensitylimitapplied;
 
   inline foreign_sphpoint_data *get_foreignpointsp(int n, unsigned char shmrank)
   {
