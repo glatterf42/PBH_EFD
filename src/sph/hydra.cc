@@ -528,7 +528,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
 
   D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
                 numberoflocalparticles, numberofforeignparticles);
-  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d  Similar pairs = %d\n Number of particles with density limit = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total, ndensitylimitapplied_total); //prints all events but only pairs for one task
+  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d  Similar pairs = %d\nNumber of particles with density limit = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total, ndensitylimitapplied_total); //prints all events but only pairs for one task
   D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
 #endif
   Mem.myfree(StackToFetch);
