@@ -337,7 +337,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   n0vrelafter              = 0;
   ti_step_to_phys          = 1 / (All.HubbleParam * Driftfac.hubble_function(All.Time));
   scatter_prob_to_phys     = All.HubbleParam * All.HubbleParam / pow(All.Time, 0);
-  max_density              = 500.0; //if this ends up being a global parameter, it would be more efficient to set it as such
+  max_density              = 110.0; //if this ends up being a global parameter, it would be more efficient to set it as such
   nsimilarpairs            = 0;
   ndensitylimitapplied     = 0;
 #endif
