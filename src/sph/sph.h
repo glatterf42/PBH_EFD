@@ -143,9 +143,9 @@ class sph : public ngbtree
   int n0vrelafter;
   double ti_step_to_phys;
   double scatter_prob_to_phys;
-  double max_density;
+  //double max_density; //allows setting a density limit which appears to have no effect
   int nsimilarpairs;
-  int ndensitylimitapplied;
+  //int ndensitylimitapplied; //counts the times the density limits is applied
 
   inline foreign_sphpoint_data *get_foreignpointsp(int n, unsigned char shmrank)
   {

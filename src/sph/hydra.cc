@@ -337,9 +337,9 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   n0vrelafter              = 0;
   ti_step_to_phys          = 1 / (All.HubbleParam * Driftfac.hubble_function(All.Time));
   scatter_prob_to_phys     = All.HubbleParam * All.HubbleParam / pow(All.Time, 0);
-  max_density              = 110.0; //if this ends up being a global parameter, it would be more efficient to set it as such
+  //max_density              = 11.0; //if this ends up being a global parameter, it would be more efficient to set it as such; 11 gets applied alot for Nres=128, but doesn't do much
   nsimilarpairs            = 0;
-  ndensitylimitapplied     = 0;
+  //ndensitylimitapplied     = 0;
 #endif
 
   NumOnWorkStack         = 0;
@@ -486,8 +486,8 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   myMPI_Allreduce( &nscatterevents, &nscatterevents_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); 
   int nsimilarpairs_total = 0;
   myMPI_Allreduce( &nsimilarpairs, &nsimilarpairs_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
-  int ndensitylimitapplied_total = 0;
-  myMPI_Allreduce( &ndensitylimitapplied, &ndensitylimitapplied_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
+  //int ndensitylimitapplied_total = 0;
+  //myMPI_Allreduce( &ndensitylimitapplied, &ndensitylimitapplied_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
 
   int NTask_here = Shmem.Sim_NTask;
   int *nscatterevents_per_task = new int[NTask_here];
@@ -528,7 +528,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
 
   D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
                 numberoflocalparticles, numberofforeignparticles);
-  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d  Similar pairs = %d\nNumber of particles with density limit = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total, ndensitylimitapplied_total); //prints all events but only pairs for one task
+  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d  Similar pairs = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total); //prints all events but only pairs for one task
   D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
 #endif
   Mem.myfree(StackToFetch);
@@ -1196,7 +1196,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                       double density_i = P_i->getMass() * kernel.wk_i;
                       double density_j = P_j->Mass * kernel.wk_j;
 
-                      /*if(density_i > max_density)
+                      /*if(density_i > max_density) //to measure the maximum density
                         {
                           max_density = density_i;
                         }
@@ -1205,7 +1205,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                           max_density = density_j;
                         } */
                       
-                      if(density_i > max_density)
+                      /*if(density_i > max_density) //to apply a maximum density
                         {
                           density_i = max_density;
                           ndensitylimitapplied++;
@@ -1214,7 +1214,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                         {
                           density_j = max_density;
                           ndensitylimitapplied++;
-                        }
+                        } */
                       
 
                       int timebin_j = P_j->TimeBinHydro;
