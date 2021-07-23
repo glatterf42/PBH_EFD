@@ -554,8 +554,10 @@ void sim::hydro_force(int step_indicator)
       NgbTree.hydro_forces_determine(Nhydroforces, targetlist);
     }
 
+#ifdef PBH_EFD
   double mean_vel_update = 0;
   double n_updates = 0;
+#endif
 
   /* let's now do the hydrodynamical kicks */
   for(int i = 0; i < Nhydroforces; i++)
@@ -605,6 +607,7 @@ void sim::hydro_force(int step_indicator)
       Sp.P[target].Vel[1] += Sp.SphP[target].HydroAccel[1] * dt_hydrokick;
       Sp.P[target].Vel[2] += Sp.SphP[target].HydroAccel[2] * dt_hydrokick;
 
+#ifdef PBH_EFD
       double vel_update_check2 = Sp.SphP[target].HydroAccel[0] * Sp.SphP[target].HydroAccel[0] +
                                  Sp.SphP[target].HydroAccel[1] * Sp.SphP[target].HydroAccel[1] +
                                  Sp.SphP[target].HydroAccel[2] * Sp.SphP[target].HydroAccel[2];
@@ -621,6 +624,7 @@ void sim::hydro_force(int step_indicator)
           n_updates++;
         }
       //#endif
+#endif
 
       if(step_indicator == SECOND_HALF_STEP)
         {
@@ -645,8 +649,10 @@ void sim::hydro_force(int step_indicator)
         }
     }
 
+#ifdef PBH_EFD
   if(n_updates)
     printf("Delta v = %f\n", mean_vel_update / n_updates); //Possible division by 0; not every active particle scatters, so might be too small.
+#endif
 
   if(step_indicator == SECOND_HALF_STEP)
     Mem.myfree(Old);
