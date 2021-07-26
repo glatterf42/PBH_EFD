@@ -386,22 +386,24 @@ possible, and intermediate forms in principle as well.
 
 The average basis value for PBH gravitational scattering cross sections 
 in Gadget unit length squared. This doesn't feature in the relative 
-velocity yet which comes in as 1/vrel^4 [s^4/km^4]. The example value has been 
-computed from the extended PBH mass function of ... .
+velocity yet which comes in as 1/vrel^4 [s^4/km^4]. The example value 
+has been computed from the extended PBH mass function of Carr, Clesse 
+et al 2020 (<https://arxiv.org/abs/1906.08217>).
 
 -------
 
 **AveragePBHMass** 3.086978e-10
 
-The average PBH mass according to the mass function by ... in Gadget unit mass.
-This corresponds to 3.087 Msun.
+The average PBH mass according to the mass function by Carr, Clesse et 
+al 2020 in Gadget unit mass. This corresponds to 3.087 Msun.
 
 -------
 
 **SigmaOverM** 5.6103e-4
 
 The quotient of the mean PBH scattering cross section and the average
-PBH mass in Gadget units.
+PBH mass in Gadget units for the mass function of Carr, Clesse et al 
+2020.
 
 -------
 

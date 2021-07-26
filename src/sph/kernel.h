@@ -26,9 +26,12 @@ struct kernel_hydra
 {
   double dx, dy, dz;
   double r, vsig, sound_i, sound_j;
-  double dvx, dvy, dvz, vdotr2, dv, dv2, dvinv3;
+  double dvx, dvy, dvz, vdotr2;
   double wk_i, wk_j, dwk_i, dwk_j;
   double h_i, h_j, dwk_ij, rho_ij_inv;
+#ifdef PBH_EFD
+  double dv, dv2, dvinv3;
+#endif
 };
 
 #if !defined(CUBIC_SPLINE_KERNEL) && !defined(WENDLAND_C2_KERNEL) && !defined(WENDLAND_C4_KERNEL) && !defined(WENDLAND_C6_KERNEL)

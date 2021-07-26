@@ -12,7 +12,7 @@
 #include "gadgetconfig.h"
 
 #include <math.h>
-#include <cmath> //for isnan()
+// #include <cmath> //for isnan(); maybe even works with only math.h
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +28,6 @@
 #include "../main/simulation.h"
 #include "../mpi_utils/mpi_utils.h"
 #include "../ngbtree/ngbtree.h"
-#include "../sph/sph.h"
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
 #include "../time_integration/timestep.h"
@@ -597,12 +596,6 @@ void sim::hydro_force(int step_indicator)
       
 #endif
 
-      /*#ifdef PBH_EFD
-            Sp.P[target].Vel[0] += Sp.SphP[target].HydroAccel[0] / 2;
-            Sp.P[target].Vel[1] += Sp.SphP[target].HydroAccel[1] / 2;
-            Sp.P[target].Vel[2] += Sp.SphP[target].HydroAccel[2] / 2;
-
-      #else */
       Sp.P[target].Vel[0] += Sp.SphP[target].HydroAccel[0] * dt_hydrokick;
       Sp.P[target].Vel[1] += Sp.SphP[target].HydroAccel[1] * dt_hydrokick;
       Sp.P[target].Vel[2] += Sp.SphP[target].HydroAccel[2] * dt_hydrokick;
@@ -618,31 +611,20 @@ void sim::hydro_force(int step_indicator)
           Terminate("HydroAccel = %f  dt = %f  target = %d  index = %d\n", vel_update_check, dt_hydrokick, target, i);
         }
 
-      if(vel_update_check)
+      if(vel_update_check) //Avoiding counting particles that don't scatter.
         {
           mean_vel_update += vel_update_check;
           n_updates++;
         }
-      //#endif
 #endif
 
       if(step_indicator == SECOND_HALF_STEP)
         {
           Sp.SphP[target].EntropyPred = Sp.SphP[target].Entropy;
           Sp.SphP[target].set_thermodynamic_variables();
-          //#ifdef PBH_EFD
-          //          Sp.SphP[target].VelPred[0] += Sp.SphP[target].HydroAccel[0] - Old[i].HydroAccel[0];
-          //          Sp.SphP[target].VelPred[1] += Sp.SphP[target].HydroAccel[1] - Old[i].HydroAccel[1];
-          //          Sp.SphP[target].VelPred[2] += Sp.SphP[target].HydroAccel[2] - Old[i].HydroAccel[2];
-          //         Sp.SphP[target].VelPred[0] += Sp.SphP[target].HydroAccel[0] * dt_hydrokick;
-          //         Sp.SphP[target].VelPred[1] += Sp.SphP[target].HydroAccel[1] * dt_hydrokick;
-          //         Sp.SphP[target].VelPred[2] += Sp.SphP[target].HydroAccel[2] * dt_hydrokick;
-
-          //#else
           Sp.SphP[target].VelPred[0] += (Sp.SphP[target].HydroAccel[0] - Old[i].HydroAccel[0]) * dt_hydrokick;
           Sp.SphP[target].VelPred[1] += (Sp.SphP[target].HydroAccel[1] - Old[i].HydroAccel[1]) * dt_hydrokick;
           Sp.SphP[target].VelPred[2] += (Sp.SphP[target].HydroAccel[2] - Old[i].HydroAccel[2]) * dt_hydrokick;
-          //#endif
           /* note: if there is no gravity, we should instead set VelPred = Vel (if this is not done anymore in the gravity
            * routine)
            */
@@ -651,7 +633,7 @@ void sim::hydro_force(int step_indicator)
 
 #ifdef PBH_EFD
   if(n_updates)
-    printf("Delta v = %f\n", mean_vel_update / n_updates); //Possible division by 0; not every active particle scatters, so might be too small.
+    printf("Delta v = %f\n", mean_vel_update / n_updates); //Avoiding division by zero.
 #endif
 
   if(step_indicator == SECOND_HALF_STEP)

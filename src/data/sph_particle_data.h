@@ -46,8 +46,9 @@ struct sph_particle_data_hydrocore
   MyFloat DhsmlDerivedDensityFactor; /*!< additional correction factor needed for pressure formulation of SPH */
   MyFloat PressureSphDensity;        /* current density derived from the pressure estimate */
 #endif
-
+#ifdef PBH_EFD
   MyFloat dist_over_time; /*!< auxiliary value to avoid zero relative velocities */
+#endif
 };
 
 /** Holds data that is stored for each sph particle in addition to
@@ -74,8 +75,9 @@ struct sph_particle_data : public sph_particle_data_hydrocore
   MyFloat MaxSignalVel; /*!< maximum signal velocity */
   MyFloat CurrentMaxTiStep;
 
-  //MyFloat scatter_delta_vel[3]; /*!< particle velocity update */
+#ifdef PBH_EFD
   bool scatter_occurrence;
+#endif
 
 #ifdef PRESSURE_ENTROPY_SPH
   MyFloat

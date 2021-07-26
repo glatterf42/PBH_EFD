@@ -8,6 +8,7 @@
  *
  *  \brief computation of SPH forces and rate of entropy generation
  */
+#include "gadgetconfig.h"
 
 #include <gsl/gsl_rng.h>
 #include <math.h>
@@ -33,7 +34,6 @@
 #include "../sph/sph.h"
 #include "../system/system.h"
 #include "../time_integration/driftfac.h"
-#include "gadgetconfig.h"
 
 /*! This file contains the "second SPH loop", where the SPH forces are
  *  computed, and where the rate of change of entropy due to the shock heating
@@ -122,12 +122,14 @@ inline void sph::sph_hydro_check_particle_particle_interaction(pinfo &pdat, int 
       Ngbhydrodat[n].SphCore = SphP;
       Ngbhydrodat[n].IntPos  = P->IntPos;
       Ngbhydrodat[n].Mass    = P->getMass();
-      Ngbhydrodat[n].ID      = P->ID.get();
 #ifndef LEAN
       Ngbhydrodat[n].TimeBinHydro = P->TimeBinHydro;
 #endif
+#ifdef PBH_EFD
+      Ngbhydrodat[n].ID      = P->ID.get();
       numberofparticles++;
       numberoflocalparticles++;
+#endif
     }
   else if(p_type == NODE_TYPE_FETCHED_PARTICLE)
     {
@@ -153,9 +155,11 @@ inline void sph::sph_hydro_check_particle_particle_interaction(pinfo &pdat, int 
       Ngbhydrodat[n].IntPos       = foreignpoint->IntPos;
       Ngbhydrodat[n].Mass         = foreignpoint->Mass;
       Ngbhydrodat[n].TimeBinHydro = foreignpoint->TimeBinHydro;
+#ifdef PBH_EFD
       Ngbhydrodat[n].ID           = foreignpoint->ID.get();
       numberofparticles++;
       numberofforeignparticles++;
+#endif
     }
   else
     Terminate("unexpected");
@@ -285,9 +289,11 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   D->mpi_printf("SPH-HYDRO: Begin hydro-force calculation.  (presently allocated=%g MB)\n", Mem.getAllocatedBytesInMB());
   D->mpi_printf("SPH-HYDRO: global Nhydro=%llu (task zero: NumGas=%d, Nhydro=%d)\n", Tp->TimeBinsHydro.GlobalNActiveParticles,
                 Tp->NumGas, ntarget);
+#ifdef PBH_EFD
   D->mpi_printf("MaxPartSph = %d\n", Tp->MaxPartSph);
   printf("NumPart = %d  TotNumPart = %lld  TotNumGas = %lld  MaxPart = %d  NActP = %d GNActP = %lld\n", Tp->NumPart, Tp->TotNumPart,
                 Tp->TotNumGas, Tp->MaxPart, Tp->TimeBinsHydro.NActiveParticles, Tp->TimeBinsHydro.GlobalNActiveParticles);
+#endif
 
   double ta = Logs.second();
 
@@ -340,6 +346,7 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   //max_density              = 11.0; //if this ends up being a global parameter, it would be more efficient to set it as such; 11 gets applied alot for Nres=128, but doesn't do much
   nsimilarpairs            = 0;
   //ndensitylimitapplied     = 0;
+  ndistinctparticles       = 0;
 #endif
 
   NumOnWorkStack         = 0;
@@ -470,65 +477,59 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
 #ifdef PBH_EFD
   //printf("Maximum density = %f\n", max_density); //This printf is useless for a global parameter, only good for estimation of it.
 
-  scatter_accel_update_list = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list", nscatterevents * sizeof(scatter_accel_update));
-  scatter_list_evaluate(scatter_list, nscatterevents);
-
-  /*for(int t = 0; t < nscatterevents; t++)
-  {
-    for(int u = 0; u < 3; u++)
-    {
-      printf("HydroAccel = %f\n", scatter_accel_update_list[t].scatter_delta_a[u]);
-    }
-  }*/
+  scatter_accel_update_list = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list", 2 * nscatterevents * sizeof(scatter_accel_update));
+  scatter_list_evaluate(scatter_list, nscatterevents); //also counts ndistinctparticles
   
-  // compute the global number of all scatter events and similar pairs
+  // compute the global number of all scatter events, distinct particles, and similar pairs
   int nscatterevents_total = 0;
-  myMPI_Allreduce( &nscatterevents, &nscatterevents_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); 
+  myMPI_Allreduce( &nscatterevents, &nscatterevents_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+  int ndistinctparticles_total = 0;
+  myMPI_Allreduce( &ndistinctparticles, &ndistinctparticles_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); 
   int nsimilarpairs_total = 0;
   myMPI_Allreduce( &nsimilarpairs, &nsimilarpairs_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
   //int ndensitylimitapplied_total = 0;
   //myMPI_Allreduce( &ndensitylimitapplied, &ndensitylimitapplied_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
 
   int NTask_here = Shmem.Sim_NTask;
-  int *nscatterevents_per_task = new int[NTask_here];
-  int *nscatterevents_sizes = new int[NTask_here];
-  int *nscatterevents_offsets  = new int[NTask_here];
+  int *ndistinctparticles_per_task = new int[NTask_here];
+  int *ndistinctparticles_sizes = new int[NTask_here];
+  int *ndistinctparticles_offsets  = new int[NTask_here];
 
-  MPI_Allgather(&nscatterevents, 1, MPI_INT, &nscatterevents_per_task[0], 1, MPI_INT, MPI_COMM_WORLD );
+  MPI_Allgather(&ndistinctparticles, 1, MPI_INT, &ndistinctparticles_per_task[0], 1, MPI_INT, MPI_COMM_WORLD );
 
   for(int i = 0; i < NTask_here; i++)
   {
-    nscatterevents_sizes[i] = nscatterevents_per_task[i] * sizeof(scatter_accel_update);
+    ndistinctparticles_sizes[i] = ndistinctparticles_per_task[i] * sizeof(scatter_accel_update);
   }
-  nscatterevents_offsets[0] = 0;
+  ndistinctparticles_offsets[0] = 0;
   for(int i = 1; i < NTask_here; i++)
   {
-    nscatterevents_offsets[i] = nscatterevents_offsets[i-1]+nscatterevents_sizes[i-1];
+    ndistinctparticles_offsets[i] = ndistinctparticles_offsets[i-1]+ndistinctparticles_sizes[i-1];
   }
-  if(nscatterevents_total * sizeof(scatter_accel_update) !=  nscatterevents_offsets[NTask_here - 1] + nscatterevents_sizes[NTask_here - 1])
+  if(ndistinctparticles_total * sizeof(scatter_accel_update) !=  ndistinctparticles_offsets[NTask_here - 1] + ndistinctparticles_sizes[NTask_here - 1])
   {
     printf("Internal error!!\n");
   }
   
   // allocate a new scatter list for all global scatter events
   scatter_accel_update *scatter_accel_update_list_global;
-  scatter_accel_update_list_global = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list_global", nscatterevents_total * sizeof(scatter_accel_update));
+  scatter_accel_update_list_global = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list_global", ndistinctparticles_total * sizeof(scatter_accel_update));
 
-  MPI_Allgatherv( &scatter_accel_update_list[0], nscatterevents*sizeof(scatter_accel_update), MPI_BYTE, 
-    &scatter_accel_update_list_global[0], &nscatterevents_sizes[0], &nscatterevents_offsets[0], MPI_BYTE, MPI_COMM_WORLD );
+  MPI_Allgatherv( &scatter_accel_update_list[0], ndistinctparticles*sizeof(scatter_accel_update), MPI_BYTE, 
+    &scatter_accel_update_list_global[0], &ndistinctparticles_sizes[0], &ndistinctparticles_offsets[0], MPI_BYTE, MPI_COMM_WORLD );
 
 
-  scatter_accel_update_apply(scatter_accel_update_list_global, nscatterevents_total);
+  scatter_accel_update_apply(scatter_accel_update_list_global, ndistinctparticles_total);
 
-  delete[] nscatterevents_offsets;
-  delete[] nscatterevents_sizes;
-  delete[] nscatterevents_per_task;
+  delete[] ndistinctparticles_offsets;
+  delete[] ndistinctparticles_sizes;
+  delete[] ndistinctparticles_per_task;
   Mem.myfree(scatter_accel_update_list_global);
   Mem.myfree(scatter_accel_update_list);
 
   D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
                 numberoflocalparticles, numberofforeignparticles);
-  D->mpi_printf("Number of scattering events = %d  Pairs considered = %d  Similar pairs = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total); //prints all events but only pairs for one task
+  D->mpi_printf("Number of scatter events = %d  Pairs considered = %d  Similar pairs = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total); //prints all events but only pairs for one task
   D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
 #endif
   Mem.myfree(StackToFetch);
@@ -1081,16 +1082,14 @@ void sph::hydro_evaluate_kernel(pinfo &pdat)
 
 #endif /* LEAN */
 }
+#endif /*EXPLICIT_VECTORIZATION */
 
+#ifdef PBH_EFD
 void sph::scatter_evaluate_kernel(pinfo &pdat)
 {
 #ifndef LEAN
   particle_data *P_i = &Tp->P[pdat.target];
   sph_particle_data *SphP_i = &Tp->SphP[pdat.target];
-
-  // if((int )P_i->ID.get() != pdat.target)
-  //    Terminate("pdat.target is not the same as the ID"); //They are not the same. But what does that mean for accessing particles
-  //    later on?
 
   /* the particles needs to be active */
   if(P_i->getTimeBinHydro() > All.HighestSynchronizedTimeBin)
@@ -1102,23 +1101,16 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
   kernel.h_i = SphP_i->Hsml;
 
   /* Now start the actual scatter computation for this particle */
-  /*  double Delta_velx_i = 0;
-    double Delta_vely_i = 0;
-    double Delta_velz_i = 0;  */
-
   int timebin_i = P_i->TimeBinHydro;
   double dt_i = (timebin_i ? (((integertime)1) << timebin_i) : 0) * All.Timebase_interval;
-  double dt_i_phys = dt_i / ti_step_to_phys;
+  double dt_i_phys = dt_i * ti_step_to_phys;
 
   SphP_i->scatter_occurrence = 0;
-  /*for(int g = 0; g < 3; g++)
-    SphP_i->scatter_delta_vel[g] = 0; */
 
   for(int n = 0; n < pdat.numngb; n++)
     {
       sph_particle_data_hydrocore *SphP_j = Ngbhydrodat[n].SphCore;
       ngbdata_hydro *P_j = &Ngbhydrodat[n];
-      //      D->mpi_printf("ID i = %d  ID j = %d\n", P_i->ID.get(), P_j->ID); //just to test that passing the IDs works; it does.
 
       if(P_j->ID >= P_i->ID.get())
         continue;
@@ -1135,10 +1127,6 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
 
           double r2 = kernel.dx * kernel.dx + kernel.dy * kernel.dy + kernel.dz * kernel.dz;
           kernel.h_j = SphP_j->Hsml;
-
-          /*      Delta_velx_i = SphP_i->VelPred[0];
-                Delta_vely_i = SphP_i->VelPred[1];
-                Delta_velz_i = SphP_i->VelPred[2];  */
 
           if(r2 < kernel.h_i * kernel.h_i || r2 < kernel.h_j * kernel.h_j)
             {
@@ -1158,9 +1146,6 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                     n0vrelbefore++;
 
                   double dist_vrel_check = std::min(SphP_i->dist_over_time, SphP_j->dist_over_time) * kernel.r / kernel.dv;
-
-                  //              D->mpi_printf("vrel = %f  dist_vrel_check = %f  d_o_t_i = %f  d_o_t_j = %f\n", kernel.dv,
-                  //              dist_vrel_check, SphP_i->dist_over_time, SphP_j->dist_over_time);
 
                   if(1000.0 * All.Time < dist_vrel_check) /*Not very efficient, only need to compute 1/a once. */
                     continue;
@@ -1219,7 +1204,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
 
                       int timebin_j = P_j->TimeBinHydro;
                       double dt_j = (timebin_j ? (((integertime)1) << timebin_j) : 0) * All.Timebase_interval;
-                      double dt_j_phys = dt_j / ti_step_to_phys;
+                      double dt_j_phys = dt_j * ti_step_to_phys;
 
                       double scatter_prob;
 
@@ -1227,7 +1212,6 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                         {
                           scatter_prob = kernel.dvinv3 * All.SigmaOverM * dt_i_phys * density_i * scatter_prob_to_phys;
                           //scatter_prob = kernel.dv * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i * scatter_prob_to_phys; //for velocity-independent sigma/m
-                          //                  scatter_prob =  kernel.dvinv3 * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i;
                           nsimilarpairs++;
                         }
                       else
@@ -1238,128 +1222,50 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                               (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 * All.SigmaOverM * scatter_prob_to_phys / 2;
                           //scatter_prob =
                           //    (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dv * All.SigmaOverM * scatter_prob_to_phys / 2; //for velocity-independent sigma/m                         //                    scatter_prob = (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 *
-                          ////                    All.SigmaOverM / 2; #from when we didn't adapt units
                         }
-                      //                D->mpi_printf("Scatter prob = %f  vrel = %f  r = %f  hi = %f  hj = %f  wki = %f  wkj = %f\n",
-                      //                scatter_prob, kernel.dv, kernel.r, kernel.h_i, kernel.h_j, kernel.wk_i, kernel.wk_j);
                       if(scatter_prob < 0)
                         Terminate("Prob = %f  kernel_i = %f  kernel_j = %f  dt_i = %f  dt_j = %f  vinv3 = %f  scatter_prob_to_phys = %f\n", scatter_prob, kernel.wk_i, kernel.wk_j, dt_i_phys, dt_j_phys, kernel.dvinv3, scatter_prob_to_phys);
  
                       double rand_u = get_random_number();
                       if(rand_u <= scatter_prob)
                         {
-                          /*int particle_i_index = get_index_from_ID(P_i->ID.get(), 0);
-                          int particle_j_index = get_index_from_ID(P_j->ID, 1);
-
-                          if(particle_i_index < 0 || particle_j_index < 0)
-                            {
-                              //                        D->mpi_printf("pdat.target = %d  index of P_i = %d  ID of P_i = %d  vrel =
-                              //                        %f\n", pdat.target, particle_i_index, P_i->ID.get(), kernel.dv);
-                              continue;
-                            }
-                            */
-
-                          //scatter_list[nscatterevents].scatter_partner_one = particle_i_index;
-                          //scatter_list[nscatterevents].scatter_partner_two = particle_j_index;
                           scatter_list[nscatterevents].partner_one.ID = P_i->ID.get();
-                          //scatter_list[nscatterevents].partner_one.prob_list_index = -1;
                           scatter_list[nscatterevents].partner_one.Mass = P_i->getMass();
                           scatter_list[nscatterevents].partner_one.dt = dt_i;
-                          //scatter_list[nscatterevents].partner_one.sum_prob = 0;
-                          //scatter_list[nscatterevents].partner_one.accel_update_list_index = -1;
                           scatter_list[nscatterevents].partner_two.ID = P_j->ID;
-                          //scatter_list[nscatterevents].partner_two.prob_list_index = -1;
                           scatter_list[nscatterevents].partner_two.Mass = P_j->Mass;
                           scatter_list[nscatterevents].partner_two.dt = dt_j;
-                          //scatter_list[nscatterevents].partner_two.sum_prob = 0;
-                          //scatter_list[nscatterevents].partner_two.accel_update_list_index = -1;
                           for(int y = 0; y < 3; y++)
                             {
                               scatter_list[nscatterevents].partner_one.VelPred[y] = SphP_i->VelPred[y];
                               scatter_list[nscatterevents].partner_one.scatter_delta_vel[y] = 0;
-                              //scatter_list[nscatterevents].partner_one.sum_scatter_delta_vel[y] = 0;
                               scatter_list[nscatterevents].partner_two.VelPred[y] = SphP_j->VelPred[y];
                               scatter_list[nscatterevents].partner_two.scatter_delta_vel[y] = 0;
-                              //scatter_list[nscatterevents].partner_two.sum_scatter_delta_vel[y] = 0;
-                              /*scatter_list[nscatterevents].partner_one.scatter_delta_vel[y] = SphP_i->VelPred[y];
-                              scatter_list[nscatterevents].partner_two.scatter_delta_vel[y] = SphP_j->VelPred[y]; */
-
                             };
                           
                           scatter_list[nscatterevents].scattering_probability = scatter_prob;
                           nscatterevents++;
-                          //                    D->mpi_printf("pdat.target = %d  unsigned int of P_i->ID.get = %d  unsigned int of
-                          //                    P_j->ID = %d\n", pdat.target, P_i->ID.get(), P_j->ID); D->mpi_printf("pdat.target = %d
-                          //                    index of P_i = %d  index of P_j = %d\n", pdat.target, particle_i_index,
-                          //                    particle_j_index);
-
-                          /* Calculate new velocities after scattering. */
-                          /*  double mass_sum = P_i->getMass() + P_j->Mass;
-                            double center_of_mass_velx = ( P_i->getMass() * SphP_i->VelPred[0] + P_j->Mass * SphP_j->VelPred[0] ) /
-                            mass_sum; double center_of_mass_vely = ( P_i->getMass() * SphP_i->VelPred[1] + P_j->Mass *
-                            SphP_j->VelPred[1] ) / mass_sum; double center_of_mass_velz = ( P_i->getMass() * SphP_i->VelPred[2] +
-                            P_j->Mass * SphP_j->VelPred[2] ) / mass_sum;
-
-                            double after_scatter_velx_i = center_of_mass_velx + P_j->Mass / mass_sum * kernel.dv * rand_x;
-                            double after_scatter_vely_i = center_of_mass_vely + P_j->Mass / mass_sum * kernel.dv * rand_y;
-                            double after_scatter_velz_i = center_of_mass_velz + P_j->Mass / mass_sum * kernel.dv * rand_z;
-
-                            Delta_velx_i = after_scatter_velx_i - Delta_velx_i;
-                            Delta_vely_i = after_scatter_vely_i - Delta_vely_i;
-                            Delta_velz_i = after_scatter_velz_i - Delta_velz_i;
-
-                            ScatterOccurence = 1;
-                            numberofscatterings++; */
-
-                          //                  SphP_i->HydroAccel[0] += Delta_velx_i / dt_i;
-                          //                  SphP_i->HydroAccel[1] += Delta_vely_i / dt_i;
-                          //                  SphP_i->HydroAccel[2] += Delta_velz_i / dt_i;
-
-                          /* Calculate them also for j even though we can't currently save them.
-                          double after_scatter_velx_j = center_of_mass_velx - P_i->getMass() / mass_sum * kernel.dv * rand_x
-                          double after_scatter_vely_j = center_of_mass_vely - P_i->getMass() / mass_sum * kernel.dv * rand_y
-                          double after_scatter_velz_j = center_of_mass_velz - P_i->getMass() / mass_sum * kernel.dv * rand_z
-
-                          double Delta_velx_j = after_scatter_velx_j - SphP_j->VelPred[0]
-                          double Delta_vely_j = after_scatter_vely_j - SphP_j->VelPred[1]
-                          double Delta_velz_j = after_scatter_velz_j - SphP_j->VelPred[2]
-                          */
                         }
                     }
                 }
             }
         }
     }
-/*  if(ScatterOccurence == 1)
-  {
-  SphP_i->HydroAccel[0] += Delta_velx_i / dt_i;
-  SphP_i->HydroAccel[1] += Delta_vely_i / dt_i;
-  SphP_i->HydroAccel[2] += Delta_velz_i / dt_i;
-  } */
 #endif /* LEAN */
 }
 #endif
 
+#ifdef PBH_EFD
 inline int sph::get_index_from_ID(MyIDType ID, int h)
 {
-  int particle_index = 0; /*This might return zero if a particle index cannot be found, e.g. if Tp->NumPart is not the goal we want to
-                             reach, so be careful. */
+  int particle_index = 0; /* Returns -1 if a particle cannot be found, see below. */
   for(int z = 0; z < Tp->TimeBinsHydro.NActiveParticles; z++)
-    //  for(int z = 0; z < Tp->TotNumPart; z++)
     {
       int test_index = Tp->TimeBinsHydro.ActiveParticleList[z];
       if(Tp->P[test_index].ID.get() == ID)
-        //      return z;
         particle_index = test_index;
-      /*    else
-            {
-            D->mpi_printf("NumPart = %d  TotNumPart = %d  TotNumGas = %d  MaxPart = %d  NActP = %d GNActP = %d\n", Tp->NumPart,
-         Tp->TotNumPart, Tp->TotNumGas, Tp->MaxPart, Tp->TimeBinsHydro.NActiveParticles, Tp->TimeBinsHydro.GlobalNActiveParticles);
-            Tp->print_particle_info_from_ID(ID);
-            Terminate("Couldn't find index of particle %d\n", ID);
-            } */
     }
-  if(particle_index == 0 && Tp->P[0].ID.get() != ID)
+  if(particle_index == 0 && Tp->P[0].ID.get() != ID) //Need to make clear the particle isn't here (index still 0), but should accept particle 0.
     {
           /*if(h == 0)
             D->mpi_printf("Index of particle %d couldn't be found, returning -1 (particle i)\n", ID);
@@ -1369,6 +1275,7 @@ inline int sph::get_index_from_ID(MyIDType ID, int h)
     }
   return particle_index;
 }
+#endif
 
 /* this routine clears the fields in the SphP particle structure that are additively computed by the SPH density loop
  * by summing over neighbours
@@ -1382,6 +1289,7 @@ inline void sph::clear_hydro_result(sph_particle_data *SphP)
   SphP->MaxSignalVel = 0;
 }
 
+#ifdef PBH_EFD
 void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
 {
   if(nscatterevents == 0)
@@ -1389,138 +1297,16 @@ void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
       printf("No scatter events, so no list evaluation!\n");
       return;
     }
-  /*sum_prob_list = (sum_prob_part *)Mem.mymalloc("sum_prob_list", nscatterevents * sizeof(sum_prob_part));
-  int n_distinct_particles = 0; */
-  /*Loop over all scatter_events to sum up scatter_prob of each particle.
-    Note: there is no guarantee that all scatter_events involving one particle are noted in this task's scatter_list. */
-  /*for(int t = 0; t < nscatterevents; t++)
-  {
-    int found_part_one = 0;
-    int found_part_two = 0;
-    for(int s = 0; s < nscatterevents; s++)
-    {
-      if(sum_prob_list[s].id == scatter_list[t].partner_one.ID)
-      {
-        sum_prob_list[s].prob_sum += scatter_list[t].scattering_probability;
-        scatter_list[t].partner_one.prob_list_index = s;
-        found_part_one = 1;
-      }
-      if(sum_prob_list[s].id == scatter_list[t].partner_two.ID)
-      {
-        sum_prob_list[s].prob_sum += scatter_list[t].scattering_probability;
-        scatter_list[t].partner_two.prob_list_index = s;
-        found_part_two = 1;
-      }
-    }
-    if(found_part_one == 0)
-    {
-      sum_prob_list[n_distinct_particles].id = scatter_list[t].partner_one.ID;
-      sum_prob_list[n_distinct_particles].prob_sum = scatter_list[t].scattering_probability;
-      scatter_list[t].partner_one.prob_list_index = n_distinct_particles++;
-    }
-    if(found_part_two == 0)
-    {
-      sum_prob_list[n_distinct_particles].id = scatter_list[t].partner_two.ID;
-      sum_prob_list[n_distinct_particles].prob_sum = scatter_list[t].scattering_probability;
-      scatter_list[t].partner_two.prob_list_index = n_distinct_particles++;
-    }
-  }*/
-  /*Loop over all scatter_events to assign each particle its sum_prob. */
-  /*for(int t = 0; t < nscatterevents; t++)
-  {
-    int index_i = scatter_list[t].partner_one.prob_list_index;
-    int index_j = scatter_list[t].partner_two.prob_list_index;
-    scatter_list[t].partner_one.sum_prob = sum_prob_list[index_i].prob_sum;
-    scatter_list[t].partner_two.sum_prob = sum_prob_list[index_j].prob_sum;
-  }
-  Mem.myfree(sum_prob_list);*/
-
-  //mycxxsort(scatter_list, scatter_list + nscatterevents, by_scatter_prob_descending);
-  //D->mpi_printf("max_scatter prob = %f\n", scatter_list[0].scattering_probability); 
+  //mycxxsort(scatter_list, scatter_list + nscatterevents, by_scatter_prob_descending); //for different sorting of the scatter_list
+  //printf("max_scatter prob = %f\n", scatter_list[0].scattering_probability); //D->mpi_printf for print of one task, printf for all tasks.
   mycxxsort(scatter_list, scatter_list + nscatterevents, by_scatter_prob_ascending);
   printf("max_scatter prob = %f\n", scatter_list[nscatterevents - 1].scattering_probability); 
-  //D->mpi_printf("max_scatter prob = %f\n", scatter_list[nscatterevents - 1].scattering_probability); 
-  //int nvelpredinits = 0;
+  
   for(int l = 0; l < nscatterevents; l++)
     {
-      /*      if(scatter_list[l].scattering_probability < INFINITY)
-      //        Terminate("particle i = %d  particle j = %d  scatter prob = %f\n", scatter_list[l].scatter_partner_one,
-      //        scatter_list[l].scatter_partner_two, scatter_list[l].scattering_probability);
-      //      D->mpi_printf("particle i = %d  particle j = %d  scatter prob = %f\n", scatter_list[l].scatter_partner_one,
-      //      scatter_list[l].scatter_partner_two, scatter_list[l].scattering_probability);
-      particle_data *P_i        = &Tp->P[scatter_list[l].scatter_partner_one];
-      sph_particle_data *SphP_i = &Tp->SphP[scatter_list[l].scatter_partner_one];
-
-      particle_data *P_j        = &Tp->P[scatter_list[l].scatter_partner_two];
-      sph_particle_data *SphP_j = &Tp->SphP[scatter_list[l].scatter_partner_two]; */
-
-      /*      if(P_i->ID.get() != scatter_list[l].scatter_partner_one || P_j->ID.get() != scatter_list[l].scatter_partner_two)
-              D->mpi_printf("P_i ID = %d  Scatter partner one ID = %d  P_j ID = %d  Scatter_partner_two = %d\n", P_i->ID.get(),
-         scatter_list[l].scatter_partner_one, P_j->ID.get(), scatter_list[l].scatter_partner_two); */
-
-      /*double vrel_x = SphP_i->VelPred[0] - SphP_j->VelPred[0];
-      double vrel_y = SphP_i->VelPred[1] - SphP_j->VelPred[1];
-      double vrel_z = SphP_i->VelPred[2] - SphP_j->VelPred[2];
-      double vrel2  = vrel_x * vrel_x + vrel_y * vrel_y + vrel_z * vrel_z;
-      double vrel   = sqrt(vrel2);
-
-      double mass_sum            = P_i->getMass() + P_j->getMass();
-      double center_of_mass_velx = (P_i->getMass() * SphP_i->VelPred[0] + P_j->getMass() * SphP_j->VelPred[0]) / mass_sum;
-      double center_of_mass_vely = (P_i->getMass() * SphP_i->VelPred[1] + P_j->getMass() * SphP_j->VelPred[1]) / mass_sum;
-      double center_of_mass_velz = (P_i->getMass() * SphP_i->VelPred[2] + P_j->getMass() * SphP_j->VelPred[2]) / mass_sum; */
-
-      /* Pick a random point on a sphere. */
-      /*double rand_v     = get_random_number();
-      double rand_w     = get_random_number();
-      double rand_theta = 2 * M_PI * rand_v;
-      double rand_phi   = acos(2 * rand_w - 1);
-      double rand_x     = cos(rand_phi) * sin(rand_theta);
-      double rand_y     = sin(rand_phi) * sin(rand_theta);
-      double rand_z     = cos(rand_theta); */
-
-      /* Calculate new velocities after scattering. */
-      /*double after_scatter_velx_i = center_of_mass_velx + P_j->getMass() / mass_sum * vrel * rand_x;
-      double after_scatter_vely_i = center_of_mass_vely + P_j->getMass() / mass_sum * vrel * rand_y;
-      double after_scatter_velz_i = center_of_mass_velz + P_j->getMass() / mass_sum * vrel * rand_z;
-
-      double after_scatter_velx_j = center_of_mass_velx - P_i->getMass() / mass_sum * vrel * rand_x;
-      double after_scatter_vely_j = center_of_mass_vely - P_i->getMass() / mass_sum * vrel * rand_y;
-      double after_scatter_velz_j = center_of_mass_velz - P_i->getMass() / mass_sum * vrel * rand_z; */
-
-      /* In preparation of the velocity update and lacking a better method. */
-      /*if(SphP_i->scatter_delta_vel[0] == 0 && SphP_i->scatter_delta_vel[1] == 0 && SphP_i->scatter_delta_vel[2] == 0)
-        {
-          for(int b = 0; b < 3; b++)
-            SphP_i->scatter_delta_vel[b] = SphP_i->VelPred[b];
-          nvelpredinits++;
-        }
-      if(SphP_j->scatter_delta_vel[0] == 0 && SphP_j->scatter_delta_vel[1] == 0 && SphP_j->scatter_delta_vel[2] == 0)
-        {
-          for(int q = 0; q < 3; q++)
-            SphP_j->scatter_delta_vel[q] = SphP_j->VelPred[q];
-          nvelpredinits++;
-        } */
-
-      /*SphP_i->scatter_delta_vel[0] = after_scatter_velx_i - SphP_i->scatter_delta_vel[0];
-      SphP_i->scatter_delta_vel[1] = after_scatter_vely_i - SphP_i->scatter_delta_vel[1];
-      SphP_i->scatter_delta_vel[2] = after_scatter_velz_i - SphP_i->scatter_delta_vel[2];
-
-      SphP_j->scatter_delta_vel[0] = after_scatter_velx_j - SphP_j->scatter_delta_vel[0];
-      SphP_j->scatter_delta_vel[1] = after_scatter_vely_j - SphP_j->scatter_delta_vel[1];
-      SphP_j->scatter_delta_vel[2] = after_scatter_velz_j - SphP_j->scatter_delta_vel[2]; */
-
       /* This hopefully works for scattering across processors. */
       scatter_partner *p_i = &scatter_list[l].partner_one;
       scatter_partner *p_j = &scatter_list[l].partner_two;
-
-      /*Only allow a portion of the energy of each particle to be involved in each event according to the probability of that event. */
-      /*double prob_fac_i = sqrt(scatter_list[l].scattering_probability / p_i.sum_prob);
-      double prob_fac_j = sqrt(scatter_list[l].scattering_probability / p_j.sum_prob);
-      for(int g = 0; g < 3; g++)
-      {
-        p_i.VelPred[g] *= prob_fac_i;
-        p_j.VelPred[g] *= prob_fac_j;
-      } */ //This apparently doesn't work as I thought it would.
 
       double vrel_x = p_i->VelPred[0] - p_j->VelPred[0];
       double vrel_y = p_i->VelPred[1] - p_j->VelPred[1];
@@ -1624,14 +1410,8 @@ void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
           p_j->scatter_delta_vel[2] = after_scatter_velz_j - scatter_list[closest_previous_index_j].partner_two.scatter_delta_vel[2];
         }
       }
-      /*for(int u = 0; u < 3; u++)
-      {
-        printf("Delta_v_i_%d = %f\n", u, p_i.scatter_delta_vel[u]);
-        printf("Delta_v_j_%d = %f\n", u, p_j.scatter_delta_vel[u]);
-      }*/
     }
   
-  int n_different_particles = 0;
   for(int c = 0; c < nscatterevents; c++)
     {
       /* Save changes as velocities for now. They are converted to accelerations with the correct time step in line 589 of kicks.cc.*/
@@ -1658,49 +1438,33 @@ void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
       }
       if(found_part_one == 0)
       {
-        scatter_accel_update_list[n_different_particles].ID = scatter_list[c].partner_one.ID;
+        scatter_accel_update_list[ndistinctparticles].ID = scatter_list[c].partner_one.ID;
         for(int u = 0; u < 3; u++)
         {
-          scatter_accel_update_list[n_different_particles].scatter_delta_a[u] = scatter_list[c].partner_one.scatter_delta_vel[u];
+          scatter_accel_update_list[ndistinctparticles].scatter_delta_a[u] = scatter_list[c].partner_one.scatter_delta_vel[u];
         }
-        n_different_particles++;
-        //scatter_list[c].partner_one.accel_update_list_index = n_different_particles++;
+        ndistinctparticles++;
       }
       if(found_part_two == 0)
       {
-        scatter_accel_update_list[n_different_particles].ID = scatter_list[c].partner_two.ID;
+        scatter_accel_update_list[ndistinctparticles].ID = scatter_list[c].partner_two.ID;
         for(int u = 0; u < 3; u++)
         {
-          scatter_accel_update_list[n_different_particles].scatter_delta_a[u] = scatter_list[c].partner_two.scatter_delta_vel[u];
+          scatter_accel_update_list[ndistinctparticles].scatter_delta_a[u] = scatter_list[c].partner_two.scatter_delta_vel[u];
         }
-        n_different_particles++;
-        //scatter_list[c].partner_two.accel_update_list_index = n_different_particles++;
+        ndistinctparticles++;
       }
     }
-  /*for(int t = 0; t < nscatterevents; t++)
-  {
-    int index_i = scatter_list[t].partner_one.accel_update_list_index;
-    int index_j = scatter_list[t].partner_two.accel_update_list_index;
-
-    for(int u = 0; u < 3; u++)
-      {
-        scatter_accel_update_list[index_i].scatter_delta_a[u] = scatter_accel_update_list[index_i].scatter_delta_a[u] - scatter_list[t].partner_one.VelPred[u];
-        scatter_accel_update_list[index_j].scatter_delta_a[u] = scatter_accel_update_list[index_j].scatter_delta_a[u] - scatter_list[t].partner_two.VelPred[u]; */
-
-        /*scatter_accel_update_list[index_i].scatter_delta_a[u] = (scatter_accel_update_list[index_i].scatter_delta_a[u] - scatter_list[t].partner_one.VelPred[u]) / scatter_list[t].partner_one.dt;
-        scatter_accel_update_list[index_j].scatter_delta_a[u] = (scatter_accel_update_list[index_j].scatter_delta_a[u] - scatter_list[t].partner_two.VelPred[u]) / scatter_list[t].partner_two.dt; */
-      //}
-  //} 
 }
 
-void sph::scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_list_global, int nscattereventstotal)
+void sph::scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_list_global, int nupdatestotal)
 {
-  if(nscattereventstotal == 0)  
+  if(nupdatestotal == 0)  
     {
       printf("No scatter events, so no acceleration update!\n");
       return;
     }
-  for(int k = 0; k < nscattereventstotal; k++)
+  for(int k = 0; k < nupdatestotal; k++)
   {
     int target_index = get_index_from_ID(scatter_accel_update_list_global[k].ID, 0);
     if(target_index < 0)
@@ -1708,18 +1472,9 @@ void sph::scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_
 
     for(int u = 0; u < 3; u++)
     {
-      Tp->SphP[target_index].HydroAccel[u] += scatter_accel_update_list_global[k].scatter_delta_a[u];
-      //printf("index = %d  HydroAccel = %f  sda = %f\n", target_index, Tp->SphP[target_index].HydroAccel[u], scatter_accel_update_list_global[k].scatter_delta_a[u]);
+      Tp->SphP[target_index].HydroAccel[u] = scatter_accel_update_list_global[k].scatter_delta_a[u];
     }
     Tp->SphP[target_index].scatter_occurrence = 1;
   }
 }
-/*
-      particle_data *P_j = &Tp->P[c];
-      sph_particle_data *SphP_j = &Tp->SphP[c];
-
-      int timebin_j = P_j->TimeBinHydro;
-      double dt_j = 2 * (timebin_j ? (((integertime)1) << timebin_j) : 0) * All.Timebase_interval;
-
-      SphP_j->HydroAccel[o] += SphP_j->scatter_delta_vel[o]/ dt_j;
-*/
+#endif

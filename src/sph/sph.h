@@ -94,22 +94,21 @@ class sph : public ngbtree
 
     MyDouble Mass;
     signed char TimeBinHydro;
+  #ifdef PBH_EFD
     unsigned int ID;
+  #endif
   };
 
   ngbdata_hydro *Ngbhydrodat;
 
+#ifdef PBH_EFD
   struct scatter_partner
   {
     unsigned int ID;
     MyFloat VelPred[3];
     MyDouble Mass;
-    //int prob_list_index; /*!< indicates existence of a scatter_event */
     MyFloat scatter_delta_vel[3]; /*!< particle velocity after scattering */
     double dt; /*!<Not physical; physical only needed for scatter_prob computation. */
-    //double sum_prob;
-    //int accel_update_list_index;
-    //MyFloat sum_scatter_delta_vel;
   };
 
   struct scatter_event
@@ -119,13 +118,6 @@ class sph : public ngbtree
     double scattering_probability;
   };
   scatter_event *scatter_list;
-
-  /*struct sum_prob_part
-  {
-    unsigned int id;
-    double prob_sum;
-  };
-  sum_prob_part *sum_prob_list; */
 
   struct scatter_accel_update
   {
@@ -146,6 +138,8 @@ class sph : public ngbtree
   //double max_density; //allows setting a density limit which appears to have no effect
   int nsimilarpairs;
   //int ndensitylimitapplied; //counts the times the density limits is applied
+  int ndistinctparticles;
+#endif
 
   inline foreign_sphpoint_data *get_foreignpointsp(int n, unsigned char shmrank)
   {
@@ -160,6 +154,7 @@ class sph : public ngbtree
   inline void clear_density_result(sph_particle_data *SphP);
 
   void hydro_evaluate_kernel(pinfo &pdat);
+#ifdef PBH_EFD
   void scatter_evaluate_kernel(pinfo &pdat);
   void scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents);
   void scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_list, int nscatterevents); /*maybe better to have ndistinctparticles or so returned? */
@@ -172,6 +167,7 @@ class sph : public ngbtree
     return s1.scattering_probability < s2.scattering_probability;  // should have ascending order
   }
   inline int get_index_from_ID(MyIDType ID, int h);
+#endif
   inline void sph_hydro_interact(pinfo &pdat, int no, char no_type, unsigned char shmrank, int mintopleafnode, int committed);
   inline void sph_hydro_open_node(pinfo &pdat, ngbnode *nop, int mintopleafnode, int committed);
   inline int sph_hydro_evaluate_particle_node_opening_criterion(pinfo &pdat, ngbnode *nop);
