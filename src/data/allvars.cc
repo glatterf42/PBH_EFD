@@ -72,6 +72,7 @@ void global_data_all_processes::register_parameters(void)
   add_param("MeanPBHScatteringCrossSection", &MeanPBHScatteringCrossSection, PARAM_DOUBLE, PARAM_FIXED);
   add_param("AveragePBHMass", &AveragePBHMass, PARAM_DOUBLE, PARAM_FIXED);
   add_param("SigmaOverM", &SigmaOverM, PARAM_DOUBLE, PARAM_FIXED);
+  add_param("Physical_Time", &Physical_Time, PARAM_DOUBLE, PARAM_CHANGEABLE);
 #endif
 
   add_param("MaxMemSize", &MaxMemSize, PARAM_INT, PARAM_CHANGEABLE);

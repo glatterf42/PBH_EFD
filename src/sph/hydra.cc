@@ -347,6 +347,8 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   nsimilarpairs            = 0;
   //ndensitylimitapplied     = 0;
   ndistinctparticles       = 0;
+  All.Physical_Time        += (log(All.Time)-log(All.TimeOld)) * ti_step_to_phys * All.UnitTime_in_s;
+  printf("Phyiscal time? %f\n", All.Physical_Time);
 #endif
 
   NumOnWorkStack         = 0;

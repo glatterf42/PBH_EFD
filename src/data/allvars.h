@@ -143,9 +143,12 @@ struct global_data_all_processes : public parameters
 
   double BoxSize; /**< Boxsize in case periodic boundary conditions are used */
 
+#ifdef PBH_EFD
   double MeanPBHScatteringCrossSection; /**< average cross section of PBHs for gravitational interactions */
   double AveragePBHMass;                /**< average PBH mass according to extended mass function */
   double SigmaOverM;                    /**< average PBH scattering cross section divided by their average mass */
+  double Physical_Time;                 /**< physical time to see if our physical time step calculation makes sense */
+#endif 
 
   /* Code options */
 

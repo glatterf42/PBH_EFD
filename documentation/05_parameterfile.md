@@ -407,6 +407,12 @@ PBH mass in Gadget units for the mass function of Carr, Clesse et al
 
 -------
 
+**Physical_Time** 1.48410e17
+
+Physical time of the simulation in seconds. Just as a check that time 
+step conversion to physical units works.
+
+------
  
 System of units                                            {#units}
 ===============
