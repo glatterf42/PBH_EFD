@@ -341,13 +341,13 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   pairsconsidered          = 0;
   n0vrelbefore             = 0;
   n0vrelafter              = 0;
-  ti_step_to_phys          = 1 / (All.HubbleParam * Driftfac.hubble_function(All.Time));
-  scatter_prob_to_phys     = 1 / (All.HubbleParam * All.HubbleParam) / pow(All.Time, 0);
+  ti_step_to_phys          = 1 / (Driftfac.hubble_function(All.Time));
+  scatter_prob_to_phys     = (All.HubbleParam * All.HubbleParam) / pow(All.Time, 0);
   //max_density              = 11.0; //if this ends up being a global parameter, it would be more efficient to set it as such; 11 gets applied alot for Nres=128, but doesn't do much
   nsimilarpairs            = 0;
   //ndensitylimitapplied     = 0;
   ndistinctparticles       = 0;
-  //All.Physical_Time        += (log(All.Time)-log(All.TimeOld)) * ti_step_to_phys * All.UnitTime_in_s * All.HubbleParam;
+  //All.Physical_Time        += (log(All.Time)-log(All.TimeOld)) * ti_step_to_phys * All.UnitTime_in_s;
   //D->mpi_printf("Phyiscal time? %f seconds\n", All.Physical_Time);
 #endif
 
