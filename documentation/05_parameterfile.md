@@ -382,14 +382,14 @@ possible, and intermediate forms in principle as well.
  
 -------
 
-**MeanPBHScatteringCrossSection** 1.73189e-1
+**MeanPBHScatteringCrossSection** 1.73189e-13
 
 The average basis value for PBH gravitational scattering cross sections 
-in Mpc squared. This also doesn't feature in the relative velocity yet 
-which comes in as 1/vrel^4 [s^4/km^4]. The example value has been 
-computed from the extended PBH mass function of Carr, Clesse et al 2020 
-(<https://arxiv.org/abs/1906.08217>). It still needs h^2 to be in Gadget
-units.
+in Mpc squared (km/s)^4. This also doesn't feature in the relative 
+velocity yet which comes in as 1/vrel^4 [s^4/km^4]. The example value 
+has been computed from the extended PBH mass function of Carr, Clesse 
+et al 2020 (<https://arxiv.org/abs/1906.08217>). It still needs h^2 to 
+be in Gadget units.
 
 -------
 
