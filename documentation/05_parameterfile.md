@@ -382,35 +382,39 @@ possible, and intermediate forms in principle as well.
  
 -------
 
-**MeanPBHScatteringCrossSection** 1.73189e-13
+**MeanPBHScatteringCrossSection** 1.73189e-1
 
 The average basis value for PBH gravitational scattering cross sections 
-in Gadget unit length squared. This doesn't feature in the relative 
-velocity yet which comes in as 1/vrel^4 [s^4/km^4]. The example value 
-has been computed from the extended PBH mass function of Carr, Clesse 
-et al 2020 (<https://arxiv.org/abs/1906.08217>).
+in Mpc squared. This also doesn't feature in the relative velocity yet 
+which comes in as 1/vrel^4 [s^4/km^4]. The example value has been 
+computed from the extended PBH mass function of Carr, Clesse et al 2020 
+(<https://arxiv.org/abs/1906.08217>). It still needs h^2 to be in Gadget
+units.
 
 -------
 
 **AveragePBHMass** 3.086978e-10
 
 The average PBH mass according to the mass function by Carr, Clesse et 
-al 2020 in Gadget unit mass. This corresponds to 3.087 Msun.
+al 2020 in 10^10 M_sun. This corresponds to 3.087 Msun. For Gadget 
+units, h is still missing in the example value.
 
 -------
 
 **SigmaOverM** 5.6103e-4
 
 The quotient of the mean PBH scattering cross section and the average
-PBH mass in Gadget units for the mass function of Carr, Clesse et al 
-2020.
+PBH mass in (Mpc)^2(km/s)^4(10^10 M_sun)^-1 for the mass function of 
+Carr, Clesse et al 2020. The example value needs a factor h for Gadget 
+units still. 
 
 -------
 
-**Physical_Time** 1.48410e17
+**Physical_Time** 1.438816e16
 
 Physical time of the simulation in seconds. Just as a check that time 
-step conversion to physical units works.
+step conversion to physical units works. The example value is for 
+Omega0 = 1 and a=0.1.
 
 ------
  
