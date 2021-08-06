@@ -410,7 +410,7 @@ units still.
 
 -------
 
-**Physical_Time** 1.438816e16
+**Physical_Time** 1.38816e16
 
 Physical time of the simulation in seconds. Just as a check that time 
 step conversion to physical units works. The example value is for 
