@@ -342,8 +342,8 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   n0vrelbefore             = 0;
   n0vrelafter              = 0;
   ti_step_to_phys          = 1 / (Driftfac.hubble_function(All.Time));
-  //scatter_prob_to_phys     = (All.HubbleParam * All.HubbleParam) / pow(All.Time, 0); //for normal velocity dependence
-  scatter_prob_to_phys     = (All.HubbleParam * All.HubbleParam) / pow(All.Time, 4); //for velocity independent scatter cross section
+  scatter_prob_to_phys     = (All.HubbleParam * All.HubbleParam) / pow(All.Time, 0); //for normal velocity dependence
+  //scatter_prob_to_phys     = (All.HubbleParam * All.HubbleParam) / pow(All.Time, 4); //for velocity independent scatter cross section
   //max_density              = 11.0; //if this ends up being a global parameter, it would be more efficient to set it as such; 11 gets applied alot for Nres=128, but doesn't do much
   nsimilarpairs            = 0;
   //ndensitylimitapplied     = 0;
@@ -1213,18 +1213,18 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
 
                       if(P_i->getMass() == P_j->Mass && dt_i_phys == dt_j_phys && kernel.h_i == kernel.h_j)
                         {
-                          //scatter_prob = kernel.dvinv3 * All.SigmaOverM * dt_i_phys * density_i * scatter_prob_to_phys;
-                          scatter_prob = kernel.dv * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i * scatter_prob_to_phys; //for velocity-independent sigma/m
+                          scatter_prob = kernel.dvinv3 * All.SigmaOverM * dt_i_phys * density_i * scatter_prob_to_phys;
+                          //scatter_prob = kernel.dv * All.SigmaOverM * dt_i_phys * P_j->Mass * kernel.wk_i * scatter_prob_to_phys; //for velocity-independent sigma/m
                           nsimilarpairs++;
                         }
                       else
                         {
                           double scatter_prob_i_on_j = density_j * dt_j_phys;
                           double scatter_prob_j_on_i = density_i * dt_i_phys;
-                          //scatter_prob =
-                              (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 * All.SigmaOverM * scatter_prob_to_phys / 2;
                           scatter_prob =
-                              (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dv * All.SigmaOverM * scatter_prob_to_phys / 2; //for velocity-independent sigma/m                         //                    scatter_prob = (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 *
+                              (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 * All.SigmaOverM * scatter_prob_to_phys / 2;
+                          //scatter_prob =
+                          //    (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dv * All.SigmaOverM * scatter_prob_to_phys / 2; //for velocity-independent sigma/m                         //                    scatter_prob = (scatter_prob_i_on_j + scatter_prob_j_on_i) * kernel.dvinv3 *
                         }
                       if(scatter_prob < 0)
                         Terminate("Prob = %f  kernel_i = %f  kernel_j = %f  dt_i = %f  dt_j = %f  vinv3 = %f  scatter_prob_to_phys = %f\n", scatter_prob, kernel.wk_i, kernel.wk_j, dt_i_phys, dt_j_phys, kernel.dvinv3, scatter_prob_to_phys);

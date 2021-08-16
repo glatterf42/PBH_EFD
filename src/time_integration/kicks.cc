@@ -12,7 +12,6 @@
 #include "gadgetconfig.h"
 
 #include <math.h>
-// #include <cmath> //for isnan(); maybe even works with only math.h
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
