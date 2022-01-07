@@ -12,6 +12,8 @@
 #ifndef SPH_H
 #define SPH_H
 
+#include <gsl/gsl_rng.h>
+
 #include "../mpi_utils/shared_mem_handler.h"
 #include "../ngbtree/ngbtree.h"
 
@@ -130,7 +132,7 @@ class sph : public ngbtree
   int numberoflocalparticles;
   int numberofforeignparticles;
   int pairsconsidered;
-  int nscatterevents;
+  
   int n0vrelbefore;
   int n0vrelafter;
   double ti_step_to_phys;
@@ -139,7 +141,10 @@ class sph : public ngbtree
   int nsimilarpairs;
   //int ndensitylimitapplied; //counts the times the density limits is applied
   int ndistinctparticles;
+
+  gsl_rng *rnd_scatter_gen; /*!< the random number generator used for scatter determination*/
 #endif
+  int nscatterevents;
 
   inline foreign_sphpoint_data *get_foreignpointsp(int n, unsigned char shmrank)
   {
@@ -155,7 +160,7 @@ class sph : public ngbtree
 
   void hydro_evaluate_kernel(pinfo &pdat);
 #ifdef PBH_EFD
-  void scatter_evaluate_kernel(pinfo &pdat);
+  int scatter_evaluate_kernel(pinfo &pdat, int nscatterevents, int mode);
   void scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents);
   void scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_list, int nscatterevents); /*maybe better to have ndistinctparticles or so returned? */
   static bool by_scatter_prob_descending(const scatter_event &s1, const scatter_event &s2)
@@ -168,6 +173,9 @@ class sph : public ngbtree
   }
   inline int get_index_from_ID(MyIDType ID, int h);
 #endif
+  inline void calculate_interactions(int ntarget, int *targetlist, int *nscatterevents, int mode);
+#define COUNT_EVENTS -1
+#define SAVE_EVENTS 1 
   inline void sph_hydro_interact(pinfo &pdat, int no, char no_type, unsigned char shmrank, int mintopleafnode, int committed);
   inline void sph_hydro_open_node(pinfo &pdat, ngbnode *nop, int mintopleafnode, int committed);
   inline int sph_hydro_evaluate_particle_node_opening_criterion(pinfo &pdat, ngbnode *nop);

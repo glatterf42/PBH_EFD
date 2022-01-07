@@ -76,7 +76,8 @@ struct sph_particle_data : public sph_particle_data_hydrocore
   MyFloat CurrentMaxTiStep;
 
 #ifdef PBH_EFD
-  bool scatter_occurrence;
+  bool scatter_occurrence; /*!< distinguishes particles that experience scattering in the current time step */
+  MyFloat PbhVel[3]; /*!< velocity change due to pbh scatter interactions */
 #endif
 
 #ifdef PRESSURE_ENTROPY_SPH

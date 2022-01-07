@@ -222,7 +222,7 @@ SUBDIRS += data
 OBJS    += data/mymalloc.o data/allvars.o data/test_symtensors.o
 INCL    += data/allvars.h data/dtypes.h data/mymalloc.h data/idstorage.h data/symtensors.h \
            data/intposconvert.h data/constants.h data/simparticles.h \
-           data/macros.h data/particle_data.h data/sph_particle_data.h \
+           data/macros.h data/particle_data.h data/pbh_particle_data.h data/sph_particle_data.h \
            data/lightcone_particle_data.h data/lightcone_massmap_data.h data/lcparticles.h data/mmparticles.h
 
 
@@ -253,6 +253,11 @@ OBJS    += mpi_utils/hypercube_allgatherv.o mpi_utils/mpi_types.o mpi_utils/mpi_
            mpi_utils/sizelimited_sendrecv.o mpi_utils/myalltoall.o mpi_utils/allreduce_sparse_double_sum.o mpi_utils/healthtest.o \
            mpi_utils/allreduce_debugcheck.o mpi_utils/shared_mem_handler.o 
 INCL    += mpi_utils/mpi_utils.h mpi_utils/generic_comm.h mpi_utils/shared_mem_handler.h
+
+#For a later decoupling of sph and pbh calculations
+#SUBDIRS += pbh_efd
+#OBJS    += pbh_efd/pbh_density.o pbh_efd/pbh_scatter.o
+#INCL    += pbh_efd/pbh_kernel.h pbh_efd/pbh_efd.h
 
 
 SUBDIRS += pm

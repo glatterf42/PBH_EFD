@@ -607,7 +607,7 @@ void sim::hydro_force(int step_indicator)
 
       if(isnan(vel_update_check))
         {
-          Terminate("HydroAccel = %f  dt = %f  target = %d  index = %d\n", vel_update_check, dt_hydrokick, target, i);
+          Terminate("HydroAccel = %f  dt = %f  target = %d  index = %d, scatter = %d\n", vel_update_check, dt_hydrokick, target, i, Sp.SphP[target].scatter_occurrence);
         }
 
       if(vel_update_check) //Avoiding counting particles that don't scatter.

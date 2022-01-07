@@ -333,7 +333,6 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   Ngbhydrodat = (ngbdata_hydro *)Mem.mymalloc("Ngbhydrodat", MAX_NGBS * sizeof(ngbdata_hydro));
 
 #ifdef PBH_EFD /* Create list of scattering events. */
-  scatter_list = (scatter_event *)Mem.mymalloc("scatter_list", Tp->TimeBinsHydro.GlobalNActiveParticles * sizeof(scatter_event));
   nscatterevents           = 0;
   numberofparticles        = 0;
   numberoflocalparticles   = 0;
@@ -350,13 +349,170 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   ndistinctparticles       = 0;
   //All.Physical_Time        += (log(All.Time)-log(All.TimeOld)) * ti_step_to_phys * All.UnitTime_in_s;
   //D->mpi_printf("Phyiscal time? %f seconds\n", All.Physical_Time);
+  rnd_scatter_gen = gsl_rng_alloc(gsl_rng_ranlxd1);
+
+  gsl_rng_set(rnd_scatter_gen, All.Ti_Current + D->ThisTask); /* choose different seed on each rank and time step */
+  calculate_interactions(ntarget, targetlist, &nscatterevents, COUNT_EVENTS);
+  scatter_list = (scatter_event *)Mem.mymalloc("scatter_list", nscatterevents * sizeof(scatter_event));
+  //printf("Counting once: %d scatterevents on task %d\n", nscatterevents, D->ThisTask); /*auxiliary output */
+
+  nscatterevents            = 0;
+  gsl_rng_set(rnd_scatter_gen, All.Ti_Current + D->ThisTask); /* reset seed to receive the same stream of random numbers again */
+  calculate_interactions(ntarget, targetlist, &nscatterevents, SAVE_EVENTS);
+  //printf("Counting twice: %d scatterevents on task %d\n", nscatterevents, D->ThisTask); /*auxiliary output */
+
+#else
+  calculate_interactions(ntarget, targetlist, &nscatterevents, 0);
 #endif
 
+#ifdef PBH_EFD
+  //printf("Maximum density = %f\n", max_density); //This printf is useless for a global parameter, only good for estimation of it.
+
+  scatter_accel_update_list = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list", 2 * nscatterevents * sizeof(scatter_accel_update));
+  scatter_list_evaluate(scatter_list, nscatterevents); //also counts ndistinctparticles
+  
+  // compute the global number of all scatter events, distinct particles, and similar pairs
+  int nscatterevents_total = 0;
+  myMPI_Allreduce( &nscatterevents, &nscatterevents_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+  int ndistinctparticles_total = 0;
+  myMPI_Allreduce( &ndistinctparticles, &ndistinctparticles_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); 
+  int nsimilarpairs_total = 0;
+  myMPI_Allreduce( &nsimilarpairs, &nsimilarpairs_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+  //int ndensitylimitapplied_total = 0;
+  //myMPI_Allreduce( &ndensitylimitapplied, &ndensitylimitapplied_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
+
+  int NTask_here = Shmem.Sim_NTask;
+  int *ndistinctparticles_per_task = new int[NTask_here];
+  int *ndistinctparticles_sizes = new int[NTask_here];
+  int *ndistinctparticles_offsets  = new int[NTask_here];
+
+  MPI_Allgather(&ndistinctparticles, 1, MPI_INT, &ndistinctparticles_per_task[0], 1, MPI_INT, MPI_COMM_WORLD );
+
+  for(int i = 0; i < NTask_here; i++)
+  {
+    ndistinctparticles_sizes[i] = ndistinctparticles_per_task[i] * sizeof(scatter_accel_update);
+  }
+  ndistinctparticles_offsets[0] = 0;
+  for(int i = 1; i < NTask_here; i++)
+  {
+    ndistinctparticles_offsets[i] = ndistinctparticles_offsets[i-1]+ndistinctparticles_sizes[i-1];
+  }
+  if(ndistinctparticles_total * sizeof(scatter_accel_update) !=  ndistinctparticles_offsets[NTask_here - 1] + ndistinctparticles_sizes[NTask_here - 1])
+  {
+    printf("Internal error, check particle count!\n");
+  }
+  
+  // allocate a new scatter list for all global scatter events
+  scatter_accel_update *scatter_accel_update_list_global;
+  scatter_accel_update_list_global = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list_global", ndistinctparticles_total * sizeof(scatter_accel_update));
+
+  MPI_Allgatherv( &scatter_accel_update_list[0], ndistinctparticles*sizeof(scatter_accel_update), MPI_BYTE, 
+    &scatter_accel_update_list_global[0], &ndistinctparticles_sizes[0], &ndistinctparticles_offsets[0], MPI_BYTE, MPI_COMM_WORLD );
+
+
+  scatter_accel_update_apply(scatter_accel_update_list_global, ndistinctparticles_total);
+
+  delete[] ndistinctparticles_offsets;
+  delete[] ndistinctparticles_sizes;
+  delete[] ndistinctparticles_per_task;
+  Mem.myfree(scatter_accel_update_list_global);
+  Mem.myfree(scatter_accel_update_list);
+
+  D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
+                numberoflocalparticles, numberofforeignparticles);
+  D->mpi_printf("Number of scatter events = %d  Pairs considered = %d  Similar pairs = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total); //prints all events but only pairs for one task
+  D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
+
+  Mem.myfree(scatter_list);
+#endif
+  Mem.myfree(Ngbhydrodat);
+
+  /* now factor in a prefactor for the computed rates */
+  for(int i = 0; i < ntarget; i++)
+    {
+      int target = targetlist[i];
+
+      double fac = GAMMA_MINUS1 / (All.cf_atime2_hubble_a * pow(Tp->SphP[target].Density, GAMMA_MINUS1));
+
+      Tp->SphP[target].DtEntropy *= fac;
+    }
+
+  /* Now the tree-based hydrodynamical force computation is finished,
+   * output some performance metrics
+   */
+
+  TIMER_START(CPU_HYDROIMBALANCE);
+
+  MPI_Allreduce(MPI_IN_PLACE, &max_ncycles, 1, MPI_INT, MPI_MAX, D->Communicator);
+
+  TIMER_STOP(CPU_HYDROIMBALANCE);
+
+  cleanup_shared_memory_access();
+
+  /* free temporary buffers */
+  Mem.myfree(Foreign_Points);
+  Mem.myfree(Foreign_Nodes);
+
+  double tb = Logs.second();
+
+  TIMER_STOPSTART(CPU_HYDRO, CPU_LOGS);
+
+  D->mpi_printf("SPH-HYDRO: hydro-force computation done. took %8.3f\n", Logs.timediff(ta, tb));
+
+  struct detailed_timings
+  {
+    double tree, wait, fetch, all;
+    double numnodes;
+    double NumForeignNodes, NumForeignPoints;
+    double fillfacFgnNodes, fillfacFgnPoints;
+  };
+  detailed_timings timer, tisum, timax;
+
+  timer.tree             = TIMER_DIFF(CPU_HYDROWALK);
+  timer.wait             = TIMER_DIFF(CPU_HYDROIMBALANCE);
+  timer.fetch            = TIMER_DIFF(CPU_HYDROFETCH);
+  timer.all              = timer.tree + timer.wait + timer.fetch + TIMER_DIFF(CPU_HYDRO);
+  timer.numnodes         = NumNodes;
+  timer.NumForeignNodes  = NumForeignNodes;
+  timer.NumForeignPoints = NumForeignPoints;
+  timer.fillfacFgnNodes  = NumForeignNodes / ((double)MaxForeignNodes);
+  timer.fillfacFgnPoints = NumForeignPoints / ((double)MaxForeignPoints);
+
+  MPI_Reduce((double *)&timer, (double *)&tisum, (int)(sizeof(detailed_timings) / sizeof(double)), MPI_DOUBLE, MPI_SUM, 0,
+             D->Communicator);
+  MPI_Reduce((double *)&timer, (double *)&timax, (int)(sizeof(detailed_timings) / sizeof(double)), MPI_DOUBLE, MPI_MAX, 0,
+             D->Communicator);
+
+  All.TotNumHydro += Tp->TimeBinsHydro.GlobalNActiveParticles;
+
+  // printf("ThisTask = %d\n", D->ThisTask); /*was just testing what Tasks are (processes) */
+
+  if(D->ThisTask == 0)
+    {
+      fprintf(Logs.FdHydro, "Nf=%9lld  highest active timebin=%d  total-Nf=%lld\n", Tp->TimeBinsHydro.GlobalNActiveParticles,
+              All.HighestActiveTimeBin, All.TotNumHydro);
+      fprintf(Logs.FdHydro, "   work-load balance: %g   part/sec: raw=%g, effective=%g\n",
+              timax.tree / ((tisum.tree + 1e-20) / D->NTask), Tp->TimeBinsGravity.GlobalNActiveParticles / (tisum.tree + 1.0e-20),
+              Tp->TimeBinsGravity.GlobalNActiveParticles / ((timax.tree + 1.0e-20) * D->NTask));
+      fprintf(Logs.FdHydro,
+              "   maximum number of nodes: %g, filled: %g  NumForeignNodes: max=%g avg=%g fill=%g NumForeignPoints: max=%g avg=%g "
+              "fill=%g  cycles=%d\n",
+              timax.numnodes, timax.numnodes / MaxNodes, timax.NumForeignNodes, tisum.NumForeignNodes / D->NTask,
+              timax.fillfacFgnNodes, timax.NumForeignPoints, tisum.NumForeignPoints / D->NTask, timax.fillfacFgnPoints, max_ncycles);
+      fprintf(Logs.FdHydro, "   avg times: <all>=%g  <tree>=%g  <wait>=%g  <fetch>=%g  sec\n", tisum.all / D->NTask,
+              tisum.tree / D->NTask, tisum.wait / D->NTask, tisum.fetch / D->NTask);
+      myflush(Logs.FdHydro);
+    }
+
+  TIMER_STOP(CPU_LOGS);
+}
+
+inline void sph::calculate_interactions(int ntarget, int *targetlist, int *nscatterevents, int mode)
+{
   NumOnWorkStack         = 0;
   AllocWorkStackBaseLow  = std::max<int>(1.5 * (Tp->NumPart + NumPartImported), TREE_MIN_WORKSTACK_SIZE);
   AllocWorkStackBaseHigh = AllocWorkStackBaseLow + TREE_EXPECTED_CYCLES * TREE_MIN_WORKSTACK_SIZE;
   MaxOnWorkStack         = AllocWorkStackBaseLow;
-
   WorkStack = (workstack_data *)Mem.mymalloc("WorkStack", AllocWorkStackBaseHigh * sizeof(workstack_data));
 
   for(int i = 0; i < ntarget; i++)
@@ -441,7 +597,8 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
                         sph_hydro_open_node(pdat, nop, mintopleaf, committed);
                     }
 #ifdef PBH_EFD
-                  scatter_evaluate_kernel(pdat);
+                  *nscatterevents = scatter_evaluate_kernel(pdat, *nscatterevents, mode);
+                  //nscatterevents is a pointer, holds an address, *nscatterevents the value. BUT WTF IS IT ZERO?
 #else
                   hydro_evaluate_kernel(pdat);
 #endif
@@ -477,153 +634,13 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
 #ifdef PRESERVE_SHMEM_BINARY_INVARIANCE
     }
 #endif
-#ifdef PBH_EFD
-  //printf("Maximum density = %f\n", max_density); //This printf is useless for a global parameter, only good for estimation of it.
-
-  scatter_accel_update_list = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list", 2 * nscatterevents * sizeof(scatter_accel_update));
-  scatter_list_evaluate(scatter_list, nscatterevents); //also counts ndistinctparticles
-  
-  // compute the global number of all scatter events, distinct particles, and similar pairs
-  int nscatterevents_total = 0;
-  myMPI_Allreduce( &nscatterevents, &nscatterevents_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
-  int ndistinctparticles_total = 0;
-  myMPI_Allreduce( &ndistinctparticles, &ndistinctparticles_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); 
-  int nsimilarpairs_total = 0;
-  myMPI_Allreduce( &nsimilarpairs, &nsimilarpairs_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
-  //int ndensitylimitapplied_total = 0;
-  //myMPI_Allreduce( &ndensitylimitapplied, &ndensitylimitapplied_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
-
-  int NTask_here = Shmem.Sim_NTask;
-  int *ndistinctparticles_per_task = new int[NTask_here];
-  int *ndistinctparticles_sizes = new int[NTask_here];
-  int *ndistinctparticles_offsets  = new int[NTask_here];
-
-  MPI_Allgather(&ndistinctparticles, 1, MPI_INT, &ndistinctparticles_per_task[0], 1, MPI_INT, MPI_COMM_WORLD );
-
-  for(int i = 0; i < NTask_here; i++)
-  {
-    ndistinctparticles_sizes[i] = ndistinctparticles_per_task[i] * sizeof(scatter_accel_update);
-  }
-  ndistinctparticles_offsets[0] = 0;
-  for(int i = 1; i < NTask_here; i++)
-  {
-    ndistinctparticles_offsets[i] = ndistinctparticles_offsets[i-1]+ndistinctparticles_sizes[i-1];
-  }
-  if(ndistinctparticles_total * sizeof(scatter_accel_update) !=  ndistinctparticles_offsets[NTask_here - 1] + ndistinctparticles_sizes[NTask_here - 1])
-  {
-    printf("Internal error!!\n");
-  }
-  
-  // allocate a new scatter list for all global scatter events
-  scatter_accel_update *scatter_accel_update_list_global;
-  scatter_accel_update_list_global = (scatter_accel_update *)Mem.mymalloc("scatter_accel_update_list_global", ndistinctparticles_total * sizeof(scatter_accel_update));
-
-  MPI_Allgatherv( &scatter_accel_update_list[0], ndistinctparticles*sizeof(scatter_accel_update), MPI_BYTE, 
-    &scatter_accel_update_list_global[0], &ndistinctparticles_sizes[0], &ndistinctparticles_offsets[0], MPI_BYTE, MPI_COMM_WORLD );
-
-
-  scatter_accel_update_apply(scatter_accel_update_list_global, ndistinctparticles_total);
-
-  delete[] ndistinctparticles_offsets;
-  delete[] ndistinctparticles_sizes;
-  delete[] ndistinctparticles_per_task;
-  Mem.myfree(scatter_accel_update_list_global);
-  Mem.myfree(scatter_accel_update_list);
-
-  D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
-                numberoflocalparticles, numberofforeignparticles);
-  D->mpi_printf("Number of scatter events = %d  Pairs considered = %d  Similar pairs = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total); //prints all events but only pairs for one task
-  D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
-#endif
   Mem.myfree(StackToFetch);
 #ifdef PRESERVE_SHMEM_BINARY_INVARIANCE
   Mem.myfree(WorkStackBak);
 #endif
   Mem.myfree(WorkStack);
-#ifdef PBH_EFD
-  Mem.myfree(scatter_list);
-#endif
-  Mem.myfree(Ngbhydrodat);
-
-  /* now factor in a prefactor for the computed rates */
-  for(int i = 0; i < ntarget; i++)
-    {
-      int target = targetlist[i];
-
-      double fac = GAMMA_MINUS1 / (All.cf_atime2_hubble_a * pow(Tp->SphP[target].Density, GAMMA_MINUS1));
-
-      Tp->SphP[target].DtEntropy *= fac;
-    }
-
-  /* Now the tree-based hydrodynamical force computation is finished,
-   * output some performance metrics
-   */
-
-  TIMER_START(CPU_HYDROIMBALANCE);
-
-  MPI_Allreduce(MPI_IN_PLACE, &max_ncycles, 1, MPI_INT, MPI_MAX, D->Communicator);
-
-  TIMER_STOP(CPU_HYDROIMBALANCE);
-
-  cleanup_shared_memory_access();
-
-  /* free temporary buffers */
-  Mem.myfree(Foreign_Points);
-  Mem.myfree(Foreign_Nodes);
-
-  double tb = Logs.second();
-
-  TIMER_STOPSTART(CPU_HYDRO, CPU_LOGS);
-
-  D->mpi_printf("SPH-HYDRO: hydro-force computation done. took %8.3f\n", Logs.timediff(ta, tb));
-
-  struct detailed_timings
-  {
-    double tree, wait, fetch, all;
-    double numnodes;
-    double NumForeignNodes, NumForeignPoints;
-    double fillfacFgnNodes, fillfacFgnPoints;
-  };
-  detailed_timings timer, tisum, timax;
-
-  timer.tree             = TIMER_DIFF(CPU_HYDROWALK);
-  timer.wait             = TIMER_DIFF(CPU_HYDROIMBALANCE);
-  timer.fetch            = TIMER_DIFF(CPU_HYDROFETCH);
-  timer.all              = timer.tree + timer.wait + timer.fetch + TIMER_DIFF(CPU_HYDRO);
-  timer.numnodes         = NumNodes;
-  timer.NumForeignNodes  = NumForeignNodes;
-  timer.NumForeignPoints = NumForeignPoints;
-  timer.fillfacFgnNodes  = NumForeignNodes / ((double)MaxForeignNodes);
-  timer.fillfacFgnPoints = NumForeignPoints / ((double)MaxForeignPoints);
-
-  MPI_Reduce((double *)&timer, (double *)&tisum, (int)(sizeof(detailed_timings) / sizeof(double)), MPI_DOUBLE, MPI_SUM, 0,
-             D->Communicator);
-  MPI_Reduce((double *)&timer, (double *)&timax, (int)(sizeof(detailed_timings) / sizeof(double)), MPI_DOUBLE, MPI_MAX, 0,
-             D->Communicator);
-
-  All.TotNumHydro += Tp->TimeBinsHydro.GlobalNActiveParticles;
-
-  printf("ThisTask = %d\n", D->ThisTask);
-
-  if(D->ThisTask == 0)
-    {
-      fprintf(Logs.FdHydro, "Nf=%9lld  highest active timebin=%d  total-Nf=%lld\n", Tp->TimeBinsHydro.GlobalNActiveParticles,
-              All.HighestActiveTimeBin, All.TotNumHydro);
-      fprintf(Logs.FdHydro, "   work-load balance: %g   part/sec: raw=%g, effective=%g\n",
-              timax.tree / ((tisum.tree + 1e-20) / D->NTask), Tp->TimeBinsGravity.GlobalNActiveParticles / (tisum.tree + 1.0e-20),
-              Tp->TimeBinsGravity.GlobalNActiveParticles / ((timax.tree + 1.0e-20) * D->NTask));
-      fprintf(Logs.FdHydro,
-              "   maximum number of nodes: %g, filled: %g  NumForeignNodes: max=%g avg=%g fill=%g NumForeignPoints: max=%g avg=%g "
-              "fill=%g  cycles=%d\n",
-              timax.numnodes, timax.numnodes / MaxNodes, timax.NumForeignNodes, tisum.NumForeignNodes / D->NTask,
-              timax.fillfacFgnNodes, timax.NumForeignPoints, tisum.NumForeignPoints / D->NTask, timax.fillfacFgnPoints, max_ncycles);
-      fprintf(Logs.FdHydro, "   avg times: <all>=%g  <tree>=%g  <wait>=%g  <fetch>=%g  sec\n", tisum.all / D->NTask,
-              tisum.tree / D->NTask, tisum.wait / D->NTask, tisum.fetch / D->NTask);
-      myflush(Logs.FdHydro);
-    }
-
-  TIMER_STOP(CPU_LOGS);
 }
+
 
 #ifdef EXPLICIT_VECTORIZATION
 void sph::hydro_evaluate_kernel(pinfo &pdat)
@@ -1088,7 +1105,7 @@ void sph::hydro_evaluate_kernel(pinfo &pdat)
 #endif /*EXPLICIT_VECTORIZATION */
 
 #ifdef PBH_EFD
-void sph::scatter_evaluate_kernel(pinfo &pdat)
+int sph::scatter_evaluate_kernel(pinfo &pdat, int nscatterevents, int mode)
 {
 #ifndef LEAN
   particle_data *P_i = &Tp->P[pdat.target];
@@ -1229,24 +1246,26 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
                       if(scatter_prob < 0)
                         Terminate("Prob = %f  kernel_i = %f  kernel_j = %f  dt_i = %f  dt_j = %f  vinv3 = %f  scatter_prob_to_phys = %f\n", scatter_prob, kernel.wk_i, kernel.wk_j, dt_i_phys, dt_j_phys, kernel.dvinv3, scatter_prob_to_phys);
  
-                      double rand_u = get_random_number();
+                      double rand_u = gsl_rng_uniform(rnd_scatter_gen);
                       if(rand_u <= scatter_prob)
                         {
-                          scatter_list[nscatterevents].partner_one.ID = P_i->ID.get();
-                          scatter_list[nscatterevents].partner_one.Mass = P_i->getMass();
-                          scatter_list[nscatterevents].partner_one.dt = dt_i;
-                          scatter_list[nscatterevents].partner_two.ID = P_j->ID;
-                          scatter_list[nscatterevents].partner_two.Mass = P_j->Mass;
-                          scatter_list[nscatterevents].partner_two.dt = dt_j;
-                          for(int y = 0; y < 3; y++)
+                          if(mode == SAVE_EVENTS)
                             {
-                              scatter_list[nscatterevents].partner_one.VelPred[y] = SphP_i->VelPred[y];
-                              scatter_list[nscatterevents].partner_one.scatter_delta_vel[y] = 0;
-                              scatter_list[nscatterevents].partner_two.VelPred[y] = SphP_j->VelPred[y];
-                              scatter_list[nscatterevents].partner_two.scatter_delta_vel[y] = 0;
-                            };
-                          
-                          scatter_list[nscatterevents].scattering_probability = scatter_prob;
+                              scatter_list[nscatterevents].partner_one.ID = P_i->ID.get();
+                              scatter_list[nscatterevents].partner_one.Mass = P_i->getMass();
+                              scatter_list[nscatterevents].partner_one.dt = dt_i;
+                              scatter_list[nscatterevents].partner_two.ID = P_j->ID;
+                              scatter_list[nscatterevents].partner_two.Mass = P_j->Mass;
+                              scatter_list[nscatterevents].partner_two.dt = dt_j;
+                              for(int y = 0; y < 3; y++)
+                                {
+                                  scatter_list[nscatterevents].partner_one.VelPred[y] = SphP_i->VelPred[y];
+                                  scatter_list[nscatterevents].partner_one.scatter_delta_vel[y] = 0;
+                                  scatter_list[nscatterevents].partner_two.VelPred[y] = SphP_j->VelPred[y];
+                                  scatter_list[nscatterevents].partner_two.scatter_delta_vel[y] = 0;
+                                };
+                              scatter_list[nscatterevents].scattering_probability = scatter_prob;
+                            }
                           nscatterevents++;
                         }
                     }
@@ -1254,6 +1273,7 @@ void sph::scatter_evaluate_kernel(pinfo &pdat)
             }
         }
     }
+  return nscatterevents;
 #endif /* LEAN */
 }
 #endif

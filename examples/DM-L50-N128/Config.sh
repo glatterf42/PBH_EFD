@@ -7,7 +7,7 @@
     
 # Gravity options
 
-    PMGRID=64
+    PMGRID=128
     TREEPM_NOTIMESPLIT
     ASMTH=2.0
     
@@ -35,4 +35,4 @@
 
 # Time integration options
 
-	FORCE_EQUAL_TIMESTEPS
+#	FORCE_EQUAL_TIMESTEPS
