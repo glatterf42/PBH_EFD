@@ -62,6 +62,8 @@ processes_*.txt
 /param.tex
 /param.param
 /*.param
+/examples/DM-L50-N128/Config.sh
+/examples/DM-L50-N128/job.sh
 
 
 #Output folders
