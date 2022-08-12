@@ -289,11 +289,11 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   D->mpi_printf("SPH-HYDRO: Begin hydro-force calculation.  (presently allocated=%g MB)\n", Mem.getAllocatedBytesInMB());
   D->mpi_printf("SPH-HYDRO: global Nhydro=%llu (task zero: NumGas=%d, Nhydro=%d)\n", Tp->TimeBinsHydro.GlobalNActiveParticles,
                 Tp->NumGas, ntarget);
-#ifdef PBH_EFD
-  D->mpi_printf("MaxPartSph = %d\n", Tp->MaxPartSph);
-  printf("NumPart = %d  TotNumPart = %lld  TotNumGas = %lld  MaxPart = %d  NActP = %d GNActP = %lld\n", Tp->NumPart, Tp->TotNumPart,
-                Tp->TotNumGas, Tp->MaxPart, Tp->TimeBinsHydro.NActiveParticles, Tp->TimeBinsHydro.GlobalNActiveParticles);
-#endif
+// #ifdef PBH_EFD
+//   D->mpi_printf("MaxPartSph = %d\n", Tp->MaxPartSph);
+//   printf("NumPart = %d  TotNumPart = %lld  TotNumGas = %lld  MaxPart = %d  NActP = %d GNActP = %lld\n", Tp->NumPart, Tp->TotNumPart,
+//                 Tp->TotNumGas, Tp->MaxPart, Tp->TimeBinsHydro.NActiveParticles, Tp->TimeBinsHydro.GlobalNActiveParticles);
+// #endif
 
   double ta = Logs.second();
 
@@ -418,10 +418,10 @@ void sph::hydro_forces_determine(int ntarget, int *targetlist)
   Mem.myfree(scatter_accel_update_list_global);
   Mem.myfree(scatter_accel_update_list);
 
-  D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
-                numberoflocalparticles, numberofforeignparticles);
-  D->mpi_printf("Number of scatter events = %d  Pairs considered = %d  Similar pairs = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total); //prints all events but only pairs for one task
-  D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
+  // D->mpi_printf("Number of particles = %d  Number of local particles = %d  Number of foreign particles = %d\n", numberofparticles,
+  //               numberoflocalparticles, numberofforeignparticles);
+  // D->mpi_printf("Number of scatter events = %d  Pairs considered = %d  Similar pairs = %d\n", nscatterevents_total, pairsconsidered, nsimilarpairs_total); //prints all events but only pairs for one task
+  // D->mpi_printf("Number of 0 vrel pairs = %d  Remaining after check = %d\n", n0vrelbefore, n0vrelafter);
 
   Mem.myfree(scatter_list);
 #endif
@@ -618,7 +618,7 @@ inline void sph::calculate_interactions(int ntarget, int *targetlist, int *nscat
 
           TIMER_STOP(CPU_HYDROFETCH);
 
-          printf("NewOnWorkStack = %d  sum_NumForeignPoints = %lld\n", NewOnWorkStack, sum_NumForeignPoints);
+          // printf("NewOnWorkStack = %d  sum_NumForeignPoints = %lld\n", NewOnWorkStack, sum_NumForeignPoints);
 
           /* now reorder the workstack such that we are first going to do residual pristine particles, and then
            * imported nodes that hang below the first leaf nodes */
@@ -1317,7 +1317,7 @@ void sph::scatter_list_evaluate(scatter_event *scatter_list, int nscatterevents)
 {
   if(nscatterevents == 0)
     {
-      printf("No scatter events, so no list evaluation!\n");
+      // printf("No scatter events, so no list evaluation!\n");
       return;
     }
   //mycxxsort(scatter_list, scatter_list + nscatterevents, by_scatter_prob_descending); //for different sorting of the scatter_list
@@ -1484,7 +1484,7 @@ void sph::scatter_accel_update_apply(scatter_accel_update *scatter_accel_update_
 {
   if(nupdatestotal == 0)  
     {
-      printf("No scatter events, so no acceleration update!\n");
+      // printf("No scatter events, so no acceleration update!\n");
       return;
     }
   for(int k = 0; k < nupdatestotal; k++)
